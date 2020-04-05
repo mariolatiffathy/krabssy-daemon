@@ -1,1 +1,8 @@
-# fabitmanage-daemon
+# FabitManage Daemon
+The daemon handles all the messages sent from the panel, and it slso sends messages to the panel.
+
+# Dependencies used
+- https://github.com/patrakov/lxc-expose-port
+- https://github.com/composer/composer
+- https://github.com/lxc/lxc
+- https://github.com/archlinux/linux
