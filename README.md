@@ -1,5 +1,5 @@
 # FabitManage Daemon
-The daemon handles all the messages sent from the panel, and it slso sends messages to the panel.
+The daemon handles all the messages sent from the panel, and it also sends messages to the panel.
 
 # Dependencies used
 - https://github.com/patrakov/lxc-expose-port
