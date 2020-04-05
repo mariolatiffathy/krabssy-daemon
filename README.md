@@ -11,3 +11,6 @@ The daemon handles all the messages sent from the panel, and it also sends messa
 - Python x.x
 - NodeJS x.x
 - LXC x.x
+
+# Notes
+- All the tests were done on CentOS 7.7.1908
