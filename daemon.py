@@ -71,6 +71,10 @@ def QueueManager():
                     
                 if queue_action == "delete_server":
                     # TODO: DELETE SERVER ACTION
+                    
+                delete_queue = daemondb.cursor()
+                delete_queue.execute("DELETE FROM queue WHERE id = %s", (queue_item['id']))
+                daemondb.commit()
     
 def PortBindingPermissions():
     while True:
