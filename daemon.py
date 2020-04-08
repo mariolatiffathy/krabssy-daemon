@@ -8,6 +8,8 @@ import configparser
 import time
 import mysql.connector
 import json
+import uuid
+import crypt
 from flask import Flask, jsonify, request
 from pyftpdlib.authorizers import DummyAuthorizer 
 from pyftpdlib.handlers import FTPHandler 
@@ -105,7 +107,8 @@ def QueueManager():
                 queue_parameters = queue_item['parameters']
                 
                 if queue_action == "create_server":
-                    # TODO: CREATE SERVER ACTION
+                    CONTAINER_ID = "fabitmanage-" + str(uuid.uuid4())
+                    subprocess.check_output(["useradd", "-m", "-d", "/home/fabitmanage/daemon-data/" + CONTAINER_ID, "-p", crypt.crypt(uuid.uuid4() + uuid.uuid4()), CONTAINER_ID])
                     
                 if queue_action == "delete_server":
                     # TODO: DELETE SERVER ACTION
