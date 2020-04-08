@@ -9,8 +9,10 @@ clear
 echo "Updating system and installing required packages..."
 if [  -n "$(uname -a | grep Ubuntu)" ]; then
     apt-get -y update
+    apt-get -y install git-core
 else
     yum -y update
+    yum -y install git
 fi
 
 clear
