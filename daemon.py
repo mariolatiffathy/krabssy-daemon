@@ -7,6 +7,7 @@ import threading
 import configparser
 import time
 import mysql.connector
+import json
 from flask import Flask, jsonify, request
 from pyftpdlib.authorizers import DummyAuthorizer 
 from pyftpdlib.handlers import FTPHandler 
@@ -35,7 +36,7 @@ app = Flask(__name__)
 
 def IS_AUTHENTICATED(auth_header):
     check_auth_key = daemondb.cursor()
-    check_auth_key.execute("SELECT * FROM daemon_keys WHERE key = '%s'", (auth_header))
+    check_auth_key.execute("SELECT * FROM daemon_keys WHERE key = %s", (auth_header))
     check_auth_key.fetchall()
     if check_auth_key.rowcount == 0:
         return False
@@ -53,6 +54,32 @@ def api_v1():
     if IS_AUTHENTICATED(request.headers['Authorization']) == False:
         return jsonify(RES_UNAUTHENTICATED), 403
     return jsonify({"error": {"http_code": 405}}), 405
+    
+@app.route('/api/v1/servers/create', methods=['POST'])
+def create_server():
+    if IS_AUTHENTICATED(request.headers['Authorization']) == False:
+        return jsonify(RES_UNAUTHENTICATED), 403
+    req_data = request.get_json()
+    required_data = ["allowed_ports", "server_id", "enable_ftp"]
+    for required in required_data:
+        if not required in req_data:
+            return jsonify({"error": {"http_code": 422, "description": "You are missing a required field."}}), 422
+    if "," in req_data['allowed_ports']:
+        ports = req_data['allowed_ports'].split(',')
+        for port in ports:
+            if int(port) > 65535 or int(port) == 0:
+                return jsonify({"error": {"http_code": 422, "description": "The port " + port + " is not a 16-bit port."}}), 422
+    else:
+        if int(req_data['allowed_ports']) > 65535 or int(req_data['allowed_ports']) == 0:
+            return jsonify({"error": {"http_code": 422, "description": "The port " + req_data['allowed_ports'] + " is not a 16-bit port."}}), 422
+    if req_data['enable_ftp'] != True and req_data['enable_ftp'] != False:
+        return jsonify({"error": {"http_code": 422, "description": "enable_ftp must be a boolean."}}), 422
+    queue_parameters = json.dumps(req_data)
+    queue_action = "create_server"
+    queuepush = daemondb.cursor()
+    queuepush.execute("INSERT INTO queue (action, parameters, being_processed) VALUES (%s, %s, %s)", (queue_action, queue_parameters, 0))
+    daemondb.commit()
+    return jsonify({"success": {"http_code" 200, "description": "Server successfully queued for creation."}}), 200
     
 def QueueManager():
     while True:
