@@ -68,16 +68,19 @@ def QueueManager():
                     # TODO: CREATE SERVER ACTION
     
 def PortBindingPermissions():
-    # TODO: Check binded ports permissions
+    while True:
+        time.sleep(1)
+        # TODO: Check binded ports permissions
 
 if __name__ == '__main__':
     print("FabitManage Daemon " + daemon_version)
     print("Starting threads & components...")
-    # Define daemon threads
-    QueueManager_t = threading.Thread(target=QueueManager, args=())
-    PortBindingPermissions_t = threading.Thread(target=PortBindingPermissions, args=())
-    # Start daemon threads
-    QueueManager_t.start()
-    PortBindingPermissions_t.start()
+    # Define & start the daemon threads
+    for _ in range(int(daemon_config['threads']['queuemanager_threads'])):
+        QueueManager_t = threading.Thread(target=QueueManager, args=())
+        QueueManager_t.start()
+    for _ in range(int(daemon_config['threads']['portbindingpermissions_threads'])):
+        PortBindingPermissions_t = threading.Thread(target=PortBindingPermissions, args=())
+        PortBindingPermissions_t.start()
     # Start Flask server
     app.run(host='0.0.0.0', port=int(daemon_config['server']['port']))
