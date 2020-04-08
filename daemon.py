@@ -14,6 +14,8 @@ daemondb = mysql.connector.connect(
   database=daemon_config['db']['name']
 )
 
+daemon_version = "v1.0-alpha"
+
 app = Flask(__name__)
 
 @app.route('/api')
@@ -40,6 +42,8 @@ def PortBindingPermissions():
     # TODO: Check binded ports permissions
 
 if __name__ == '__main__':
+	print("FabitManage Daemon " + daemon_version)
+	print("Starting threads & components...")
     # Define daemon threads
     QueueManager_t = threading.Thread(target=QueueManager, args=())
     PortBindingPermissions_t = threading.Thread(target=PortBindingPermissions, args=())
