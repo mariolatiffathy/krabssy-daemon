@@ -1,0 +1,11 @@
+{
+    "name": "Minecraft Latest",
+    "author": "FabitHost",
+    "version": "1.0",
+    "events": {
+        "on_create": {
+            "wget https://fabithost.com/minecraft.jar",
+            "echo \"Downloaded JAR file :)\""
+        }
+    }
+}
