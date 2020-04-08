@@ -60,7 +60,7 @@ def create_server():
     if IS_AUTHENTICATED(request.headers['Authorization']) == False:
         return jsonify(RES_UNAUTHENTICATED), 403
     req_data = request.get_json()
-    required_data = ["allowed_ports", "server_id", "enable_ftp"]
+    required_data = ["allowed_ports", "server_id", "enable_ftp", "ram", "cpu", "disk", "startup_command"]
     for required in required_data:
         if not required in req_data:
             return jsonify({"error": {"http_code": 422, "description": "You are missing a required field."}}), 422
@@ -74,6 +74,12 @@ def create_server():
             return jsonify({"error": {"http_code": 422, "description": "The port " + req_data['allowed_ports'] + " is not a 16-bit port."}}), 422
     if req_data['enable_ftp'] != True and req_data['enable_ftp'] != False:
         return jsonify({"error": {"http_code": 422, "description": "enable_ftp must be a boolean."}}), 422
+    if int(req_data['ram']) < 32 or int(req_data['ram']) == 0:
+        return jsonify({"error": {"http_code": 422, "description": "ram must be an integer greater than or equal to 32."}}), 422
+    if int(req_data['cpu']) < 10 or int(req_data['cpu']) == 0:
+        return jsonify({"error": {"http_code": 422, "description": "cpu must be an integer greater than or equal to 10."}}), 422
+    if int(req_data['disk']) < 32 or int(req_data['disk']) == 0:
+        return jsonify({"error": {"http_code": 422, "description": "disk must be an integer greater than or equal to 3."}}), 422
     queue_parameters = json.dumps(req_data)
     queue_action = "create_server"
     queuepush = daemondb.cursor()
