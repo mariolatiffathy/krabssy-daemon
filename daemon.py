@@ -1,3 +1,7 @@
+'''
+FABITMANAGE DAEMON
+@mariolatiffathy/fabitmanage-daemon
+'''
 import subproccess
 import threading
 import configparser
@@ -37,6 +41,12 @@ def QueueManager():
                 update_being_processed = daemondb.cursor()
                 update_being_processed.execute("UPDATE queue SET being_processed = 1 WHERE id = %s", (queue_item['id']))
                 daemondb.commit()
+                
+                queue_action = queue_item['action']
+                queue_parameters = queue_item['parameters']
+                
+                if queue_action == "create_server":
+                    # TODO: CREATE SERVER ACTION
     
 def PortBindingPermissions():
     # TODO: Check binded ports permissions
