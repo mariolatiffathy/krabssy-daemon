@@ -27,16 +27,16 @@ def api():
     return jsonify({"error": {"http_code": 405}}), 405
 
 def QueueManager():
-	while True:
+    while True:
         time.sleep(1)
-	    queue_cursor = daemondb.cursor()
-	    queue_cursor.execute("SELECT * FROM queue WHERE being_processed = 0")
-	    result = queue_cursor.fetchall()
-	    if queue_cursor.rowcount > 0:
-	        for queue_item in result:
-		        update_being_processed = daemondb.cursor()
-		        update_being_processed.execute("UPDATE queue SET being_processed = 1 WHERE id = %s", (queue_item['id']))
-		        daemondb.commit()
+        queue_cursor = daemondb.cursor()
+        queue_cursor.execute("SELECT * FROM queue WHERE being_processed = 0")
+        result = queue_cursor.fetchall()
+        if queue_cursor.rowcount > 0:
+            for queue_item in result:
+                update_being_processed = daemondb.cursor()
+                update_being_processed.execute("UPDATE queue SET being_processed = 1 WHERE id = %s", (queue_item['id']))
+                daemondb.commit()
     
 def PortBindingPermissions():
     # TODO: Check binded ports permissions
