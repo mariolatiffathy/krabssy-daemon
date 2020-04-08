@@ -52,8 +52,8 @@ def PortBindingPermissions():
     # TODO: Check binded ports permissions
 
 if __name__ == '__main__':
-	print("FabitManage Daemon " + daemon_version)
-	print("Starting threads & components...")
+    print("FabitManage Daemon " + daemon_version)
+    print("Starting threads & components...")
     # Define daemon threads
     QueueManager_t = threading.Thread(target=QueueManager, args=())
     PortBindingPermissions_t = threading.Thread(target=PortBindingPermissions, args=())
