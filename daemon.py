@@ -6,6 +6,7 @@ import subproccess
 import threading
 import configparser
 import time
+import mysql.connector
 from flask import Flask, jsonify, request
 
 # Load daemon configuration file
