@@ -6,11 +6,13 @@ import subproccess
 import threading
 import configparser
 import time
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
+# Load daemon configuration file
 daemon_config = configparser.ConfigParser()
 daemon_config.read("/fabitmanage-daemon/config/daemon.ini")
 
+# Start a MySQL database connection
 daemondb = mysql.connector.connect(
   host=daemon_config['db']['host'],
   user=daemon_config['db']['user'],
@@ -18,16 +20,33 @@ daemondb = mysql.connector.connect(
   database=daemon_config['db']['name']
 )
 
+# Variables
 daemon_version = "v1.0-alpha"
 
+# Fixed responses
+RES_UNAUTHENTICATED = {"error": {"http_code": 403}}
+
+# Init Flask app
 app = Flask(__name__)
+
+def IS_AUTHENTICATED(auth_header):
+    check_auth_key = daemondb.cursor()
+    check_auth_key.execute("SELECT * FROM daemon_keys WHERE key = '%s'", (auth_header))
+    check_auth_key.fetchall()
+    if check_auth_key.rowcount == 0:
+        return False
+    else:
+        return True
 
 @app.route('/api')
 def api():
-    # TODO: Check authentication
+    if IS_AUTHENTICATED(request.headers['Authorization']) == False:
+        return jsonify(RES_UNAUTHENTICATED), 403
     return jsonify({"error": {"http_code": 405}}), 405
 
 @app.route('/api/v1'):
+    if IS_AUTHENTICATED(request.headers['Authorization']) == False:
+        return jsonify(RES_UNAUTHENTICATED), 403
     return jsonify({"error": {"http_code": 405}}), 405
 
 def QueueManager():
