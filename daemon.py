@@ -26,7 +26,7 @@ def api():
 
 def QueueManager():
 	while True:
-		time.sleep(1)
+        time.sleep(1)
 	    queue_cursor = daemondb.cursor()
 	    queue_cursor.execute("SELECT * FROM queue WHERE being_processed = 0")
 	    result = queue_cursor.fetchall()
