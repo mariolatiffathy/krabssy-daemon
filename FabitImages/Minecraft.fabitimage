@@ -4,8 +4,13 @@
     "version": "1.0",
     "events": {
         "on_create": {
-            "wget https://fabithost.com/minecraft.jar",
-            "echo \"Downloaded JAR file :)\""
+            "from_container": {
+                "wget https://fabithost.com/minecraft.jar",
+                "echo \"Downloaded JAR file :)\""
+            },
+            "as_root": {
+                "chattr +i ./minecraft.jar"
+            }
         }
     }
 }
