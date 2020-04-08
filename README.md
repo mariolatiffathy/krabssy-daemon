@@ -5,8 +5,7 @@ The daemon handles all the messages sent from the panel, and it also sends messa
 - To be edited...
 
 # Requirements
-- Python x.x
-- NodeJS x.x
+- Python 3.6
 
 # Notes
 - All the tests were done on CentOS 7.7.1908
