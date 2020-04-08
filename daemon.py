@@ -37,7 +37,7 @@ def QueueManager():
 		        daemondb.commit()
     
 def PortBindingPermissions():
-    # TODO
+    # TODO: Check binded ports permissions
 
 if __name__ == '__main__':
     # Define daemon threads
