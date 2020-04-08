@@ -78,7 +78,7 @@ def create_server():
         return jsonify({"error": {"http_code": 422, "description": "ram must be an integer greater than or equal to 32."}}), 422
     if int(req_data['cpu']) < 10 or int(req_data['cpu']) == 0:
         return jsonify({"error": {"http_code": 422, "description": "cpu must be an integer greater than or equal to 10."}}), 422
-    if int(req_data['disk']) < 32 or int(req_data['disk']) == 0:
+    if int(req_data['disk']) < 3 or int(req_data['disk']) == 0:
         return jsonify({"error": {"http_code": 422, "description": "disk must be an integer greater than or equal to 3."}}), 422
     if not isinstance(req_data['server_id'], str):
         return jsonify({"error": {"http_code": 422, "description": "server_id must be a string."}}), 422
