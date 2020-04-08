@@ -1,5 +1,6 @@
 ## /api/v1/servers/create
 **method**: POST (in JSON)
+
 **parameters**:
   - allowed_ports: The allowed port(s) seperated by commas.
       Example: 25565,25566
