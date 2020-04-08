@@ -21,7 +21,7 @@ daemondb = mysql.connector.connect(
 )
 
 # Variables
-daemon_version = "v1.0-alpha"
+daemon_version = "v0.1-alpha"
 
 # Fixed responses
 RES_UNAUTHENTICATED = {"error": {"http_code": 403}}

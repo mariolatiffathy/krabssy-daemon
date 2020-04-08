@@ -1,6 +1,6 @@
 !/bin/bash
 clear
-echo "FabitManage Daemon v1.0-alpha Installer"
+echo "FabitManage Daemon v0.1-alpha Installer"
 echo "==========================================="
 echo "Press any key to start the installation, or press ^C to exit."
 pause
