@@ -68,6 +68,9 @@ def QueueManager():
                 
                 if queue_action == "create_server":
                     # TODO: CREATE SERVER ACTION
+                    
+                if queue_action == "delete_server":
+                    # TODO: DELETE SERVER ACTION
     
 def PortBindingPermissions():
     while True:
