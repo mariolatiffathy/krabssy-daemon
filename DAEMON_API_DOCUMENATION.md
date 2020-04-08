@@ -1,7 +1,6 @@
 ## /api/v1/servers/create
-'''
-method: POST (in JSON)
-parameters:
+**method**: POST (in JSON)
+**parameters**:
   - allowed_ports: The allowed port(s) seperated by commas.
       Example: 25565,25566
       Example: 25565
@@ -39,4 +38,3 @@ parameters:
       Example: java -jar mc.jar
       Required: yes
       Type: string
-'''
