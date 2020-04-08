@@ -46,10 +46,11 @@ def api():
     return jsonify({"error": {"http_code": 405}}), 405
 
 @app.route('/api/v1'):
+def api_v1():
     if IS_AUTHENTICATED(request.headers['Authorization']) == False:
         return jsonify(RES_UNAUTHENTICATED), 403
     return jsonify({"error": {"http_code": 405}}), 405
-
+    
 def QueueManager():
     while True:
         time.sleep(1)
