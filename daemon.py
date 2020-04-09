@@ -7,12 +7,12 @@ import subprocess
 import threading
 import configparser
 import time
-import mysql.connector
 import json
 import uuid
 import crypt
 import os
 import platform
+import mysql.connector
 from flask import Flask, jsonify, request
 from pyftpdlib.authorizers import DummyAuthorizer 
 from pyftpdlib.handlers import FTPHandler 
