@@ -11,6 +11,7 @@ import mysql.connector
 import json
 import uuid
 import crypt
+import os
 from flask import Flask, jsonify, request
 from pyftpdlib.authorizers import DummyAuthorizer 
 from pyftpdlib.handlers import FTPHandler 
@@ -96,6 +97,12 @@ def create_server():
     queuepush.execute("INSERT INTO queue (action, parameters, being_processed) VALUES (%s, %s, %s)", (queue_action, queue_parameters, 0))
     daemondb.commit()
     return jsonify({"success": {"http_code": 200, "description": "Server successfully queued for creation."}}), 200
+    
+def AsUser(uid, gid):
+    def set_ids():
+        os.setgid(gid)
+        os.setuid(uid)
+    return set_ids
     
 def QueueManager():
     while True:
