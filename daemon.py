@@ -84,6 +84,11 @@ def create_server():
         return jsonify({"error": {"http_code": 422, "description": "disk must be an integer greater than or equal to 3."}}), 422
     if not isinstance(req_data['server_id'], str):
         return jsonify({"error": {"http_code": 422, "description": "server_id must be a string."}}), 422
+    check_serverid_exists = daemondb.cursor()
+    check_serverid_exists.execute("SELECT * FROM servers WHERE server_id = %s", (req_data['server_id']))
+    check_serverid_exists.fetchall()
+    if check_serverid_exists.rowcount >= 1:
+        return jsonify({"error": {"http_code": 422, "description": "Another server with this server_id already exists."}}), 422
     queue_parameters = json.dumps(req_data)
     queue_action = "create_server"
     queuepush = daemondb.cursor()
