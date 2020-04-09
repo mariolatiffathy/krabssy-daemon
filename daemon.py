@@ -118,62 +118,61 @@ def QueueManager():
         queue_cursor.execute("SELECT * FROM queue WHERE being_processed = 0")
         result = queue_cursor.fetchone()
         if queue_cursor.rowcount > 0:
-            for queue_item in result:
-                update_being_processed = daemondb.cursor()
-                update_being_processed.execute("UPDATE queue SET being_processed = 1 WHERE id = %s", (queue_item['id']))
-                daemondb.commit()
-                
-                queue_action = queue_item['action']
-                queue_parameters = json.loads(queue_item['parameters'])
-                
-                if queue_action == "create_server":
-                    # Define container ID
-                    CONTAINER_ID = "fabitmanage-" + str(uuid.uuid4())
-                    # Create the container
-                    subprocess.check_output(['mkdir', '-p', '/home/fabitmanage/daemon-data/' + CONTAINER_ID])
-                    subprocess.check_output(["useradd", "-m", "-d", "/home/fabitmanage/daemon-data/" + CONTAINER_ID, "-p", crypt.crypt(uuid.uuid4() + uuid.uuid4()), CONTAINER_ID])
-                    # Define the cgconfig kernel configuration
-                    CGCONFIG_KERNEL_CFG = "group " + CONTAINER_ID + " { cpu { cpu.shares = " + str(queue_parameters['cpu']) + "; } memory { memory.memsw.limit_in_bytes = " + str(queue_parameters['ram']) + "m; } }"
-                    # Get the filesystem of the partition /home
-                    FSCK = subprocess.check_output(['fsck', '-N', '/home'])
-                    filesystem = FSCK.decode().splitlines()[1].split(" ")[5].rstrip()
-                    # Set disk quota for the container
-                    subprocess.check_output(["setquota", CONTAINER_ID, int(queue_parameters['disk'])*1000, int(queue_parameters['disk'])*1000, "0", "0", filesystem])
-                    # Write kernel configurations
-                    with open("/etc/cgconfig.conf", "a+") as cgconfig:
-                        cgconfig.write(CGCONFIG_KERNEL_CFG)
-                    with open("/etc/cgrules.conf", "a+") as cgrules:
-                        cgrules.write(CONTAINER_ID + " memory,cpu " + CONTAINER_ID)
-                    # Get the FabitImage
-                    FABITIMAGE_PATH = ""
-                    FABITIMAGE_JSON = ""
-                    get_fabitimage = daemondb.cursor()
-                    get_fabitimage.execute("SELECT * FROM images WHERE fabitimage_id = %s", (queue_parameters['fabitimage_id']))
-                    get_fabitimage_result = get_fabitimage.fetchall()
-                    if get_fabitimage.rowcount > 0:
-                        for image in get_fabitimage_result:
-                            FABITIMAGE_PATH = image['path']
-                    with open(FABITIMAGE_PATH, "r") as FABITIMAGE_FILE:
-                        FABITIMAGE_JSON = FABITIMAGE_FILE.read()
-                    FABITIMAGE_PARSED = json.loads(FABITIMAGE_JSON)
-                    # Get the container UID and GID
-                    CONTAINER_UID = subprocess.check_output(['id', '-u', CONTAINER_ID]).decode().rstrip()
-                    CONTAINER_GID = subprocess.check_output(['id', '-g', CONTAINER_ID]).decode().rstrip()
-                    # FABITIMAGE/PROCESS_EVENT on_create
-                    if "from_container" in FABITIMAGE_PARSED['events']['on_create']:
-                        for command in FABITIMAGE_PARSED['events']['on_create']['from_container']:
-                            subprocess.check_output(command.split(" "), preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)))
-                    if "as_root" in FABITIMAGE_PARSED['events']['on_create']:
-                        for command in FABITIMAGE_PARSED['events']['on_create']['as_root']:
-                            subprocess.check_output(command.split(" "))
-                        
-                    
-                if queue_action == "delete_server":
-                    print("TODO")
-                    
-                delete_queue = daemondb.cursor()
-                delete_queue.execute("DELETE FROM queue WHERE id = %s", (queue_item['id']))
-                daemondb.commit()
+           update_being_processed = daemondb.cursor()
+           update_being_processed.execute("UPDATE queue SET being_processed = 1 WHERE id = %s", (result['id']))
+           daemondb.commit()
+           
+           queue_action = result['action']
+           queue_parameters = json.loads(result['parameters'])
+           
+           if queue_action == "create_server":
+               # Define container ID
+               CONTAINER_ID = "fabitmanage-" + str(uuid.uuid4())
+               # Create the container
+               subprocess.check_output(['mkdir', '-p', '/home/fabitmanage/daemon-data/' + CONTAINER_ID])
+               subprocess.check_output(["useradd", "-m", "-d", "/home/fabitmanage/daemon-data/" + CONTAINER_ID, "-p", crypt.crypt(uuid.uuid4() + uuid.uuid4()), CONTAINER_ID])
+               # Define the cgconfig kernel configuration
+               CGCONFIG_KERNEL_CFG = "group " + CONTAINER_ID + " { cpu { cpu.shares = " + str(queue_parameters['cpu']) + "; } memory { memory.memsw.limit_in_bytes = " + str(queue_parameters['ram']) + "m; } }"
+               # Get the filesystem of the partition /home
+               FSCK = subprocess.check_output(['fsck', '-N', '/home'])
+               filesystem = FSCK.decode().splitlines()[1].split(" ")[5].rstrip()
+               # Set disk quota for the container
+               subprocess.check_output(["setquota", CONTAINER_ID, int(queue_parameters['disk'])*1000, int(queue_parameters['disk'])*1000, "0", "0", filesystem])
+               # Write kernel configurations
+               with open("/etc/cgconfig.conf", "a+") as cgconfig:
+                   cgconfig.write(CGCONFIG_KERNEL_CFG)
+               with open("/etc/cgrules.conf", "a+") as cgrules:
+                   cgrules.write(CONTAINER_ID + " memory,cpu " + CONTAINER_ID)
+               # Get the FabitImage
+               FABITIMAGE_PATH = ""
+               FABITIMAGE_JSON = ""
+               get_fabitimage = daemondb.cursor()
+               get_fabitimage.execute("SELECT * FROM images WHERE fabitimage_id = %s", (queue_parameters['fabitimage_id']))
+               get_fabitimage_result = get_fabitimage.fetchall()
+               if get_fabitimage.rowcount > 0:
+                   for image in get_fabitimage_result:
+                       FABITIMAGE_PATH = image['path']
+               with open(FABITIMAGE_PATH, "r") as FABITIMAGE_FILE:
+                   FABITIMAGE_JSON = FABITIMAGE_FILE.read()
+               FABITIMAGE_PARSED = json.loads(FABITIMAGE_JSON)
+               # Get the container UID and GID
+               CONTAINER_UID = subprocess.check_output(['id', '-u', CONTAINER_ID]).decode().rstrip()
+               CONTAINER_GID = subprocess.check_output(['id', '-g', CONTAINER_ID]).decode().rstrip()
+               # FABITIMAGE/PROCESS_EVENT on_create
+               if "from_container" in FABITIMAGE_PARSED['events']['on_create']:
+                   for command in FABITIMAGE_PARSED['events']['on_create']['from_container']:
+                       subprocess.check_output(command.split(" "), preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)))
+               if "as_root" in FABITIMAGE_PARSED['events']['on_create']:
+                   for command in FABITIMAGE_PARSED['events']['on_create']['as_root']:
+                       subprocess.check_output(command.split(" "))
+                   
+                   
+           if queue_action == "delete_server":
+               print("TODO")
+               
+           delete_queue = daemondb.cursor()
+           delete_queue.execute("DELETE FROM queue WHERE id = %s", (result['id']))
+           daemondb.commit()
     
 def PortBindingPermissions():
     while True:
