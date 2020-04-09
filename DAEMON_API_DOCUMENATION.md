@@ -8,7 +8,7 @@
       Required: yes
       Type: string
   
-   - server_id: An identifier so the panel can know if the daemon has successfully finished the server creation queue or no.
+   - server_id: An identifier so the panel can identify the newly created server in the future.
       Example: 123
       Example: abc
       Required: yes
