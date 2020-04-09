@@ -95,7 +95,7 @@ def create_server():
     queuepush = daemondb.cursor()
     queuepush.execute("INSERT INTO queue (action, parameters, being_processed) VALUES (%s, %s, %s)", (queue_action, queue_parameters, 0))
     daemondb.commit()
-    return jsonify({"success": {"http_code" 200, "description": "Server successfully queued for creation."}}), 200
+    return jsonify({"success": {"http_code": 200, "description": "Server successfully queued for creation."}}), 200
     
 def QueueManager():
     while True:
