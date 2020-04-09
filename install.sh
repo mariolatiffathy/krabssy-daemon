@@ -24,5 +24,9 @@ mkdir -p /fabitmanage-daemon/config && cp ./fabitmanage-installer-tmp/config/dae
 mkdir -p /fabitmanage-daemon/data/images && cp ./fabitmanage-installer-tmp/data/images/Minecraft.fabitimage /fabitmanage-daemon/data/images
 
 clear
+echo "Installing required Python modules..."
+pip3.6 install -r ./fabitmanage-installer-tmp/requirements.txt
+
+clear
 echo "Removing temporary files..."
 rm -rf ./fabitmanage-installer-tmp/
