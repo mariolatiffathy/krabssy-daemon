@@ -20,11 +20,11 @@ from pyftpdlib.servers import FTPServer
 
 # Logger
 def Logger(type, message):
-    if type == "error";
+    if type == "error":
         TYPE_TAG = "[ERROR]"
-    if type == "warn";
+    if type == "warn":
         TYPE_TAG = "[WARNING]"
-    if type == "info";
+    if type == "info":
         TYPE_TAG = "[INFORMATION]"
     print("[DAEMON] " + TYPE_TAG + " " + message)
 
