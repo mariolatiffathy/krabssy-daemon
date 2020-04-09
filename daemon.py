@@ -12,8 +12,10 @@ import uuid
 import crypt
 import os
 import platform
+import sys
 import mysql.connector
 from flask import Flask, jsonify, request
+from waitress import serve
 from pyftpdlib.authorizers import DummyAuthorizer 
 from pyftpdlib.handlers import FTPHandler 
 from pyftpdlib.servers import FTPServer
@@ -42,6 +44,7 @@ try:
     )
 except mysql.connector.errors.DatabaseError as e:
     Logger("error", "Unable to connect to the daemon database.")
+    sys.exit()
 
 # Variables
 daemon_version = "v0.1-alpha"
@@ -216,4 +219,4 @@ if __name__ == '__main__':
     cgroups_refresher_t = threading.Thread(target=cgroups_refresher, args=())
     cgroups_refresher_t.start()
     # Start Flask server
-    app.run(host='0.0.0.0', port=int(daemon_config['server']['port']))
+    serve(app, host="0.0.0.0", port=int(daemon_config['server']['port']))
