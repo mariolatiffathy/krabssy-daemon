@@ -120,9 +120,23 @@ def QueueManager():
                 queue_parameters = json.loads(queue_item['parameters'])
                 
                 if queue_action == "create_server":
+                    # Define container ID
                     CONTAINER_ID = "fabitmanage-" + str(uuid.uuid4())
+                    # Create the container
+                    subprocess.check_output(['mkdir', '-p', '/home/fabitmanage/daemon-data/' + CONTAINER_ID])
                     subprocess.check_output(["useradd", "-m", "-d", "/home/fabitmanage/daemon-data/" + CONTAINER_ID, "-p", crypt.crypt(uuid.uuid4() + uuid.uuid4()), CONTAINER_ID])
+                    # Define the cgconfig kernel configuration
                     CGCONFIG_KERNEL_CFG = "group " + CONTAINER_ID + " { cpu { cpu.shares = " + str(queue_parameters['cpu']) + "; } memory { memory.memsw.limit_in_bytes = " + str(queue_parameters['ram']) + "m; } }"
+                    # Get the filesystem of the partition /home
+                    FSCK = subprocess.check_output(['fsck', '-N', '/home'])
+                    filesystem = FSCK.decode().splitlines()[1].split(" ")[5]
+                    # Set disk quota for the container
+                    subprocess.check_output(["setquota", CONTAINER_ID, int(queue_parameters['disk'])*1000, int(queue_parameters['disk'])*1000, "0", "0", filesystem])
+                    # Write kernel configurations
+                    with open("/etc/cgconfig.conf", "a+") as cgconfig:
+                        cgconfig.write(CGCONFIG_KERNEL_CFG)
+                    with open("/etc/cgrules.conf", "a+") as cgrules:
+                        cgrules.write(CONTAINER_ID + " memory,cpu " + CONTAINER_ID)
                     
                 if queue_action == "delete_server":
                     # TODO: DELETE SERVER ACTION
@@ -135,6 +149,12 @@ def PortBindingPermissions():
     while True:
         time.sleep(1)
         # TODO: Check binded ports permissions
+        
+def cgroups_refresher():
+    while True:
+        subprocess.check_output(['service', 'cgred', 'restart'])
+        subprocess.check_output(['service', 'cgconfig', 'restart'])
+        time.sleep(int(daemon_config['cgroups']['refresher_interval']))
 
 if __name__ == '__main__':
     print("FabitManage Daemon " + daemon_version)
@@ -146,5 +166,7 @@ if __name__ == '__main__':
     for _ in range(int(daemon_config['threads']['portbindingpermissions_threads'])):
         PortBindingPermissions_t = threading.Thread(target=PortBindingPermissions, args=())
         PortBindingPermissions_t.start()
+    cgroups_refresher_t = threading.Thread(target=cgroups_refresher, args=())
+    cgroups_refresher_t.start()
     # Start Flask server
     app.run(host='0.0.0.0', port=int(daemon_config['server']['port']))
