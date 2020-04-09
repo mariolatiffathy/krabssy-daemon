@@ -116,7 +116,7 @@ def QueueManager():
         time.sleep(1)
         queue_cursor = daemondb.cursor()
         queue_cursor.execute("SELECT * FROM queue WHERE being_processed = 0")
-        result = queue_cursor.fetchall()
+        result = queue_cursor.fetchone()
         if queue_cursor.rowcount > 0:
             for queue_item in result:
                 update_being_processed = daemondb.cursor()
@@ -136,7 +136,7 @@ def QueueManager():
                     CGCONFIG_KERNEL_CFG = "group " + CONTAINER_ID + " { cpu { cpu.shares = " + str(queue_parameters['cpu']) + "; } memory { memory.memsw.limit_in_bytes = " + str(queue_parameters['ram']) + "m; } }"
                     # Get the filesystem of the partition /home
                     FSCK = subprocess.check_output(['fsck', '-N', '/home'])
-                    filesystem = FSCK.decode().splitlines()[1].split(" ")[5]
+                    filesystem = FSCK.decode().splitlines()[1].split(" ")[5].rstrip()
                     # Set disk quota for the container
                     subprocess.check_output(["setquota", CONTAINER_ID, int(queue_parameters['disk'])*1000, int(queue_parameters['disk'])*1000, "0", "0", filesystem])
                     # Write kernel configurations
