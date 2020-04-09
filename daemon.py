@@ -3,7 +3,7 @@
 FABITMANAGE DAEMON
 @mariolatiffathy/fabitmanage-daemon
 '''
-import subproccess
+import subprocess
 import threading
 import configparser
 import time
