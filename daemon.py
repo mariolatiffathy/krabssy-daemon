@@ -64,7 +64,7 @@ def create_server():
     if IS_AUTHENTICATED(request.headers['Authorization']) == False:
         return jsonify(RES_UNAUTHENTICATED), 403
     req_data = request.get_json()
-    required_data = ["allowed_ports", "server_id", "enable_ftp", "ram", "cpu", "disk", "startup_command"]
+    required_data = ["allowed_ports", "server_id", "enable_ftp", "ram", "cpu", "disk", "startup_command", "fabitimage_id"]
     for required in required_data:
         if not required in req_data:
             return jsonify({"error": {"http_code": 422, "description": "You are missing a required field."}}), 422
@@ -86,6 +86,8 @@ def create_server():
         return jsonify({"error": {"http_code": 422, "description": "disk must be an integer greater than or equal to 3."}}), 422
     if not isinstance(req_data['server_id'], str):
         return jsonify({"error": {"http_code": 422, "description": "server_id must be a string."}}), 422
+    if not isinstance(req_data['fabitimage_id'], str):
+        return jsonify({"error": {"http_code": 422, "description": "fabitimage_id must be a string."}}), 422
     check_serverid_exists = daemondb.cursor()
     check_serverid_exists.execute("SELECT * FROM servers WHERE server_id = %s", (req_data['server_id']))
     check_serverid_exists.fetchall()
