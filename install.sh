@@ -20,7 +20,7 @@ echo "Downloading components..."
 git clone https://github.com/mariolatiffathy/fabitmanage-daemon.git fabitmanage-installer-tmp
 mkdir -p /fabitmanage-daemon && cp ./fabitmanage-installer-tmp/daemon.py /fabitmanage-daemon
 mkdir -p /fabitmanage-daemon/config && cp ./fabitmanage-installer-tmp/config/daemon.ini /fabitmanage-daemon/config
-mkdir -p /fabitmanage-daemon/data && cp ./fabitmanage-installer-tmp/data/Minecraft.fabitimage /fabitmanage-daemon/data
+mkdir -p /fabitmanage-daemon/data/images && cp ./fabitmanage-installer-tmp/data/images/Minecraft.fabitimage /fabitmanage-daemon/data/images
 
 clear
 echo "Removing temporary files..."
