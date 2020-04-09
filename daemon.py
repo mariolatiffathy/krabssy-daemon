@@ -18,17 +18,30 @@ from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler 
 from pyftpdlib.servers import FTPServer
 
+# Logger
+def Logger(type, message):
+    if type == "error";
+        TYPE_TAG = "[ERROR]"
+    if type == "warn";
+        TYPE_TAG = "[WARNING]"
+    if type == "info";
+        TYPE_TAG = "[INFORMATION]"
+    print("[DAEMON] " + TYPE_TAG + " " + message)
+
 # Load daemon configuration file
 daemon_config = configparser.ConfigParser()
 daemon_config.read("/fabitmanage-daemon/config/daemon.ini")
 
 # Start a MySQL database connection
-daemondb = mysql.connector.connect(
-  host=daemon_config['db']['host'],
-  user=daemon_config['db']['user'],
-  passwd=daemon_config['db']['password'],
-  database=daemon_config['db']['name']
-)
+try:
+    daemondb = mysql.connector.connect(
+      host=daemon_config['db']['host'],
+      user=daemon_config['db']['user'],
+      passwd=daemon_config['db']['password'],
+      database=daemon_config['db']['name']
+    )
+except mysql.connector.errors.DatabaseError as e:
+    Logger("error", "Unable to connect to the daemon database.")
 
 # Variables
 daemon_version = "v0.1-alpha"
