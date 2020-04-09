@@ -93,6 +93,11 @@ def create_server():
     check_serverid_exists.fetchall()
     if check_serverid_exists.rowcount >= 1:
         return jsonify({"error": {"http_code": 422, "description": "Another server with this server_id already exists."}}), 422
+    check_fabitimage_exists = daemondb.cursor()
+    check_fabitimage_exists.execute("SELECT * FROM images WHERE fabitimage_id = %s", (req_data['fabitimage_id']))
+    check_fabitimage_exists.fetchall()
+    if check_fabitimage_exists.rowcount == 0:
+        return jsonify({"error": {"http_code": 404, "description": "The inputted fabitimage_id doesn't exists."}}), 404
     queue_parameters = json.dumps(req_data)
     queue_action = "create_server"
     queuepush = daemondb.cursor()
@@ -139,9 +144,32 @@ def QueueManager():
                         cgconfig.write(CGCONFIG_KERNEL_CFG)
                     with open("/etc/cgrules.conf", "a+") as cgrules:
                         cgrules.write(CONTAINER_ID + " memory,cpu " + CONTAINER_ID)
+                    # Get the FabitImage
+                    FABITIMAGE_PATH = ""
+                    FABITIMAGE_JSON = ""
+                    get_fabitimage = daemondb.cursor()
+                    get_fabitimage.execute("SELECT * FROM images WHERE fabitimage_id = %s", (queue_parameters['fabitimage_id']))
+                    get_fabitimage_result = get_fabitimage.fetchall()
+                    if get_fabitimage.rowcount > 0:
+                        for image in get_fabitimage_result:
+                            FABITIMAGE_PATH = image['path']
+                    with open(FABITIMAGE_PATH, "r") as FABITIMAGE_FILE:
+                        FABITIMAGE_JSON = FABITIMAGE_FILE.read()
+                    FABITIMAGE_PARSED = json.loads(FABITIMAGE_JSON)
+                    # Get the container UID and GID
+                    CONTAINER_UID = subprocess.check_output(['id', '-u', CONTAINER_ID]).decode().rstrip()
+                    CONTAINER_GID = subprocess.check_output(['id', '-g', CONTAINER_ID]).decode().rstrip()
+                    # FABITIMAGE/PROCESS_EVENT on_create
+                    if "from_container" in FABITIMAGE_PARSED['events']['on_create']:
+                        for command in FABITIMAGE_PARSED['events']['on_create']['from_container']:
+                            subprocess.check_output(command.split(" "), preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)))
+                    if "as_root" in FABITIMAGE_PARSED['events']['on_create']:
+                        for command in FABITIMAGE_PARSED['events']['on_create']['as_root']:
+                            subprocess.check_output(command.split(" "))
+                        
                     
                 if queue_action == "delete_server":
-                    # TODO: DELETE SERVER ACTION
+                    print("TODO")
                     
                 delete_queue = daemondb.cursor()
                 delete_queue.execute("DELETE FROM queue WHERE id = %s", (queue_item['id']))
