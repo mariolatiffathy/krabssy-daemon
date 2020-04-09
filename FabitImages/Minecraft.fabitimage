@@ -9,7 +9,7 @@
                 "echo \"Downloaded JAR file :)\""
             },
             "as_root": {
-                "chattr +i ./minecraft.jar"
+                "chattr +u +i ./minecraft.jar"
             }
         }
     }
