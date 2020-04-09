@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 FABITMANAGE DAEMON
 @mariolatiffathy/fabitmanage-daemon
