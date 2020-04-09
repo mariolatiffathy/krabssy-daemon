@@ -12,6 +12,7 @@ import json
 import uuid
 import crypt
 import os
+import platform
 from flask import Flask, jsonify, request
 from pyftpdlib.authorizers import DummyAuthorizer 
 from pyftpdlib.handlers import FTPHandler 
@@ -181,8 +182,12 @@ def PortBindingPermissions():
         
 def cgroups_refresher():
     while True:
-        subprocess.check_output(['service', 'cgred', 'restart'])
-        subprocess.check_output(['service', 'cgconfig', 'restart'])
+        if 'ubuntu' in platform.platform().lower() or 'debian' in platform.platform().lower():
+            subprocess.check_output(['cgconfigparser', '-l', '/etc/cgconfig.conf'])
+            subprocess.check_output(['cgrulesengd'])
+        else:
+            subprocess.check_output(['service', 'cgred', 'restart'])
+            subprocess.check_output(['service', 'cgconfig', 'restart'])
         time.sleep(int(daemon_config['cgroups']['refresher_interval']))
 
 if __name__ == '__main__':
