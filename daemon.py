@@ -70,10 +70,10 @@ def create_server():
         ports = req_data['allowed_ports'].split(',')
         for port in ports:
             if int(port) > 65535 or int(port) == 0:
-                return jsonify({"error": {"http_code": 422, "description": "The port " + port + " is not a 16-bit port."}}), 422
+                return jsonify({"error": {"http_code": 422, "description": "The port " + str(port) + " is not a 16-bit port."}}), 422
     else:
         if int(req_data['allowed_ports']) > 65535 or int(req_data['allowed_ports']) == 0:
-            return jsonify({"error": {"http_code": 422, "description": "The port " + req_data['allowed_ports'] + " is not a 16-bit port."}}), 422
+            return jsonify({"error": {"http_code": 422, "description": "The port " + str(req_data['allowed_ports']) + " is not a 16-bit port."}}), 422
     if req_data['enable_ftp'] != True and req_data['enable_ftp'] != False:
         return jsonify({"error": {"http_code": 422, "description": "enable_ftp must be a boolean."}}), 422
     if int(req_data['ram']) < 32 or int(req_data['ram']) == 0:
