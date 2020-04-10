@@ -133,17 +133,17 @@ def create_server():
     
 # Flask Custom Errors
 @app.errorhandler(404)
-def daemon_err_404():
+def daemon_err_404(e):
     return jsonify({"error": {"http_code": 404}}), 404
 app.register_error_handler(404, daemon_err_404)
 
 @app.errorhandler(405)
-def daemon_err_405():
+def daemon_err_405(e):
     return jsonify({"error": {"http_code": 405}}), 405
 app.register_error_handler(405, daemon_err_405)
 
 @app.errorhandler(500)
-def daemon_err_500():
+def daemon_err_500(e):
     return jsonify({"error": {"http_code": 500}}), 500
 app.register_error_handler(500, daemon_err_500)
     
