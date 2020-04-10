@@ -66,19 +66,28 @@ def IS_AUTHENTICATED(auth_header):
 
 @app.route('/api')
 def api():
-    if request.headers['Authorization'] is None or IS_AUTHENTICATED(request.headers['Authorization']) == False:
+    if request.headers.get('Authorization') is not None:
+        if IS_AUTHENTICATED(request.headers.get('Authorization')) == False:
+            return jsonify(RES_UNAUTHENTICATED), 403
+    else:
         return jsonify(RES_UNAUTHENTICATED), 403
     return jsonify({"error": {"http_code": 405}}), 405
 
 @app.route('/api/v1')
 def api_v1():
-    if request.headers['Authorization'] is None or IS_AUTHENTICATED(request.headers['Authorization']) == False:
+    if request.headers.get('Authorization') is not None:
+        if IS_AUTHENTICATED(request.headers.get('Authorization')) == False:
+            return jsonify(RES_UNAUTHENTICATED), 403
+    else:
         return jsonify(RES_UNAUTHENTICATED), 403
     return jsonify({"error": {"http_code": 405}}), 405
     
 @app.route('/api/v1/servers/create', methods=['POST'])
 def create_server():
-    if request.headers['Authorization'] is None or IS_AUTHENTICATED(request.headers['Authorization']) == False:
+    if request.headers.get('Authorization') is not None:
+        if IS_AUTHENTICATED(request.headers.get('Authorization')) == False:
+            return jsonify(RES_UNAUTHENTICATED), 403
+    else:
         return jsonify(RES_UNAUTHENTICATED), 403
     req_data = request.get_json()
     required_data = ["allowed_ports", "server_id", "enable_ftp", "ram", "cpu", "disk", "startup_command", "fabitimage_id"]
