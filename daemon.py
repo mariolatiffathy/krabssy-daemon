@@ -57,7 +57,7 @@ app = Flask(__name__)
 
 def IS_AUTHENTICATED(auth_header):
     check_auth_key = daemondb.cursor()
-    check_auth_key.execute("SELECT * FROM daemon_keys WHERE key = %s", (auth_header))
+    check_auth_key.execute("SELECT * FROM daemon_keys WHERE d_key = %s", (auth_header))
     check_auth_key.fetchall()
     if check_auth_key.rowcount == 0:
         return False
