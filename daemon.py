@@ -34,14 +34,15 @@ def Logger(type, message):
 daemon_config = configparser.ConfigParser()
 daemon_config.read("/fabitmanage-daemon/config/daemon.ini")
 
-# Start a MySQL database connection
-daemondb = mysql.connector.connect(
- host=daemon_config['db']['host'],
- user=daemon_config['db']['user'],
- passwd=daemon_config['db']['password'],
- database=daemon_config['db']['name']
-)
-
+# MySQL database connector (needed so the connection can work in the multi-threads)
+def daemondb_connector():
+    daemondb = mysql.connector.connect(
+     host=daemon_config['db']['host'],
+     user=daemon_config['db']['user'],
+     passwd=daemon_config['db']['password'],
+     database=daemon_config['db']['name']
+    )
+    
 # Variables
 daemon_version = "v0.1-alpha"
 
@@ -150,6 +151,7 @@ def AsUser(uid, gid):
     return set_ids
     
 def QueueManager():
+    daemondb_connector()
     while True:
         time.sleep(1)
         queue_cursor = daemondb.cursor()
@@ -204,7 +206,6 @@ def QueueManager():
                    for command in FABITIMAGE_PARSED['events']['on_create']['as_root']:
                        subprocess.check_output(command.split(" "))
                    
-                   
            if queue_action == "delete_server":
                print("TODO")
                
@@ -232,6 +233,17 @@ def cgroups_refresher():
 if __name__ == '__main__':
     print("FabitManage Daemon " + daemon_version)
     print("Starting threads & components...")
+    # Test the connection to the daemon DB
+    try:
+        daemondb = mysql.connector.connect(
+        host=daemon_config['db']['host'],
+        user=daemon_config['db']['user'],
+        passwd=daemon_config['db']['password'],
+        database=daemon_config['db']['name']
+       )
+    except mysql.connector.errors.DatabaseError as e:
+        Logger("error", "Unable to connect to the daemon database.")
+        sys.exit()
     # Define & start the daemon threads
     for _ in range(int(daemon_config['threads']['queuemanager_threads'])):
         QueueManager_t = threading.Thread(target=QueueManager, args=())
