@@ -203,6 +203,7 @@ def QueueManager():
            delete_queue = daemondb.cursor()
            delete_queue.execute("DELETE FROM queue WHERE id = %s", (result['id']))
            daemondb.commit()
+           daemondb.close()
     
 def PortBindingPermissions():
     while True:
@@ -226,7 +227,7 @@ if __name__ == '__main__':
     print("Starting threads & components...")
     # Test the connection to the daemon DB
     try:
-        daemondb = mysql.connector.connect(
+        daemondb_connection_test = mysql.connector.connect(
         host=daemon_config['db']['host'],
         user=daemon_config['db']['user'],
         passwd=daemon_config['db']['password'],
