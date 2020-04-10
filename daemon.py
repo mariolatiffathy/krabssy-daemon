@@ -36,7 +36,7 @@ daemon_config.read("/fabitmanage-daemon/config/daemon.ini")
 
 # Start a MySQL database connection
 try:
-    daemondb = mysql.connector.connect(
+    mysql.connector.connect(
       host=daemon_config['db']['host'],
       user=daemon_config['db']['user'],
       passwd=daemon_config['db']['password'],
@@ -45,6 +45,12 @@ try:
 except mysql.connector.errors.DatabaseError as e:
     Logger("error", "Unable to connect to the daemon database.")
     sys.exit()
+daemondb = mysql.connector.connect(
+ host=daemon_config['db']['host'],
+ user=daemon_config['db']['user'],
+ passwd=daemon_config['db']['password'],
+ database=daemon_config['db']['name']
+)
 
 # Variables
 daemon_version = "v0.1-alpha"
