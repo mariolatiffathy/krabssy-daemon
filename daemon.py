@@ -33,15 +33,6 @@ def Logger(type, message):
 # Load daemon configuration file
 daemon_config = configparser.ConfigParser()
 daemon_config.read("/fabitmanage-daemon/config/daemon.ini")
-
-# MySQL database connector (needed so the connection can work in the multi-threads)
-def daemondb_connector():
-    daemondb = mysql.connector.connect(
-     host=daemon_config['db']['host'],
-     user=daemon_config['db']['user'],
-     passwd=daemon_config['db']['password'],
-     database=daemon_config['db']['name']
-    )
     
 # Variables
 daemon_version = "v0.1-alpha"
@@ -151,9 +142,9 @@ def AsUser(uid, gid):
     return set_ids
     
 def QueueManager():
-    daemondb_connector()
     while True:
         time.sleep(1)
+        daemondb = mysql.connector.connect(host=daemon_config['db']['host'], user=daemon_config['db']['user'], passwd=daemon_config['db']['password'], database=daemon_config['db']['name'])
         queue_cursor = daemondb.cursor()
         queue_cursor.execute("SELECT * FROM queue WHERE being_processed = 0")
         result = queue_cursor.fetchone()
