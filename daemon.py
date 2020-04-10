@@ -223,6 +223,8 @@ def PortBindingPermissions():
         
 def cgroups_refresher():
     while True:
+        if not os.path.exists('/etc/cgconfig.conf'):
+            with open('/etc/cgconfig.conf', 'w'): pass
         if 'ubuntu' in platform.platform().lower() or 'debian' in platform.platform().lower():
             subprocess.check_output(['cgconfigparser', '-l', '/etc/cgconfig.conf'])
             subprocess.check_output(['cgrulesengd'])
