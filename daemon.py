@@ -182,7 +182,7 @@ def QueueManager():
                FSCK = subprocess.check_output(['fsck', '-N', '/home'])
                filesystem = FSCK.decode().splitlines()[1].split(" ")[5].rstrip()
                # Set disk quota for the container
-               subprocess.check_output(["setquota", CONTAINER_ID, int(queue_parameters['disk'])*1000, int(queue_parameters['disk'])*1000, "0", "0", filesystem])
+               subprocess.check_output(["setquota", CONTAINER_ID, str(int(queue_parameters['disk'])*1000), str(int(queue_parameters['disk'])*1000), "0", "0", filesystem])
                # Write kernel configurations
                with open("/etc/cgconfig.conf", "a+") as cgconfig:
                    cgconfig.write(CGCONFIG_KERNEL_CFG)
