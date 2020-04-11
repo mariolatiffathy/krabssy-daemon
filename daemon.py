@@ -156,7 +156,7 @@ def AsUser(uid, gid):
     
 def QueueManager():
     while True:
-        time.sleep(1)
+        time.sleep(random.randint(100, 501)/100)
         daemondb = mysql.connector.connect(**db_settings)
         queue_cursor = daemondb.cursor(dictionary=True)
         queue_cursor.execute("SELECT * FROM queue WHERE being_processed = 0")
@@ -174,7 +174,7 @@ def QueueManager():
                CONTAINER_ID = "fabitmanage-" + str(uuid.uuid4())
                # Create the container
                subprocess.check_output(['mkdir', '-p', '/home/fabitmanage/daemon-data/' + CONTAINER_ID])
-               subprocess.check_output(["useradd", "-m", "-d", "/home/fabitmanage/daemon-data/" + CONTAINER_ID, "-p", crypt.crypt(uuid.uuid4() + uuid.uuid4()), CONTAINER_ID])
+               subprocess.check_output(["useradd", "-m", "-d", "/home/fabitmanage/daemon-data/" + CONTAINER_ID, "-p", crypt.crypt(str(uuid.uuid4()) + str(uuid.uuid4())), CONTAINER_ID])
                # Define the cgconfig kernel configuration
                CGCONFIG_KERNEL_CFG = "group " + CONTAINER_ID + " { cpu { cpu.shares = " + str(queue_parameters['cpu']) + "; } memory { memory.memsw.limit_in_bytes = " + str(queue_parameters['ram']) + "m; } }"
                # Get the filesystem of the partition /home
@@ -229,7 +229,7 @@ def QueueManager():
     
 def PortBindingPermissions():
     while True:
-        time.sleep(1)
+        time.sleep(random.randint(100, 501)/100)
         # TODO: Check binded ports permissions
         
 def cgroups_refresher():
