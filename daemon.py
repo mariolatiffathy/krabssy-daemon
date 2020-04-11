@@ -206,13 +206,13 @@ def QueueManager():
                if "from_container" in FABITIMAGE_PARSED['events']['on_create']:
                    for command in FABITIMAGE_PARSED['events']['on_create']['from_container']:
                        try:
-                           subprocess.check_output(command.split(" "), preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)))
+                           subprocess.check_output(command.split(" "), preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)), cwd="/home/fabitmanage/daemon-data/" + CONTAINER_ID)
                        except Exception as e:
                            Logger("warn", "Failed to execute command '" + command + "' from container on server creation.")
                if "as_root" in FABITIMAGE_PARSED['events']['on_create']:
                    for command in FABITIMAGE_PARSED['events']['on_create']['as_root']:
                        try:
-                           subprocess.check_output(command.split(" "))
+                           subprocess.check_output(command.split(" "), cwd="/home/fabitmanage/daemon-data/" + CONTAINER_ID)
                        except Exception as e:
                            Logger("warn", "Failed to execute command '" + command + "' as root on server creation.")
                push_server = daemondb.cursor()
