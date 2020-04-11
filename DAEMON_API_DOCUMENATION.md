@@ -42,6 +42,5 @@
       
   - fabitimage_id: The ID of the FabitImage that is stored in the daemon database.
       Example: 123
-      Example: abc
       Required: yes
-      Type: string
+      Type: integer

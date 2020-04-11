@@ -114,15 +114,13 @@ def create_server():
         return jsonify({"error": {"http_code": 422, "description": "disk must be an integer greater than or equal to 3."}}), 422
     if not isinstance(req_data['server_id'], str):
         return jsonify({"error": {"http_code": 422, "description": "server_id must be a string."}}), 422
-    if not isinstance(req_data['fabitimage_id'], str):
-        return jsonify({"error": {"http_code": 422, "description": "fabitimage_id must be a string."}}), 422
     check_serverid_exists = daemondb.cursor()
     check_serverid_exists.execute("SELECT * FROM servers WHERE server_id = %s", (req_data['server_id']))
     check_serverid_exists.fetchall()
     if check_serverid_exists.rowcount >= 1:
         return jsonify({"error": {"http_code": 422, "description": "Another server with this server_id already exists."}}), 422
     check_fabitimage_exists = daemondb.cursor()
-    check_fabitimage_exists.execute("SELECT * FROM images WHERE fabitimage_id = %s", (req_data['fabitimage_id']))
+    check_fabitimage_exists.execute("SELECT * FROM images WHERE id = %s", (int(req_data['fabitimage_id'])))
     check_fabitimage_exists.fetchall()
     if check_fabitimage_exists.rowcount == 0:
         return jsonify({"error": {"http_code": 404, "description": "The inputted fabitimage_id doesn't exists."}}), 404
@@ -193,7 +191,7 @@ def QueueManager():
                FABITIMAGE_PATH = ""
                FABITIMAGE_JSON = ""
                get_fabitimage = daemondb.cursor()
-               get_fabitimage.execute("SELECT * FROM images WHERE fabitimage_id = %s", (queue_parameters['fabitimage_id']))
+               get_fabitimage.execute("SELECT * FROM images WHERE id = %s", (int(queue_parameters['fabitimage_id'])))
                get_fabitimage_result = get_fabitimage.fetchall()
                if get_fabitimage.rowcount > 0:
                    for image in get_fabitimage_result:
@@ -217,6 +215,9 @@ def QueueManager():
                            subprocess.check_output(command.split(" "))
                        except Exception as e:
                            Logger("warn", "Failed to execute command '" + command + "' as root on server creation.")
+               push_server = daemondb.cursor()
+               push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id) VALUES (%s, %s, %s, %s, %s)", (queue_parameters['server_id'], CONTAINER_ID, int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id'])))
+               daemondb.commit()
                    
            if queue_action == "delete_server":
                print("TODO")
