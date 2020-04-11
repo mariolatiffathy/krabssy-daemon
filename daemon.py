@@ -207,10 +207,16 @@ def QueueManager():
                # FABITIMAGE/PROCESS_EVENT on_create
                if "from_container" in FABITIMAGE_PARSED['events']['on_create']:
                    for command in FABITIMAGE_PARSED['events']['on_create']['from_container']:
-                       subprocess.check_output(command.split(" "), preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)))
+                       try:
+                           subprocess.check_output(command.split(" "), preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)))
+                       except Exception as e:
+                           Logger("warn", "Failed to execute command '" + command + "' from container on server creation.")
                if "as_root" in FABITIMAGE_PARSED['events']['on_create']:
                    for command in FABITIMAGE_PARSED['events']['on_create']['as_root']:
-                       subprocess.check_output(command.split(" "))
+                       try:
+                           subprocess.check_output(command.split(" "))
+                       except Exception as e:
+                           Logger("warn", "Failed to execute command '" + command + "' as root on server creation.")
                    
            if queue_action == "delete_server":
                print("TODO")
