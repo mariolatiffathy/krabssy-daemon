@@ -172,7 +172,7 @@ def QueueManager():
            
            if queue_action == "create_server":
                # Define container ID
-               CONTAINER_ID = "fabitmanage-" + str(uuid.uuid4())
+               CONTAINER_ID = "fabitmanage-" + str(uuid.uuid4()).replace("-", "")[0:15] # Note: Must meet the Linux username rules https://stackoverflow.com/a/6949914/8524395
                # Create the container
                subprocess.check_output(['mkdir', '-p', '/home/fabitmanage/daemon-data/' + CONTAINER_ID])
                subprocess.check_output(["useradd", "-m", "-d", "/home/fabitmanage/daemon-data/" + CONTAINER_ID, "-p", crypt.crypt(str(uuid.uuid4()) + str(uuid.uuid4())), CONTAINER_ID])
