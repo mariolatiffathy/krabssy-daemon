@@ -56,7 +56,7 @@ app = Flask(__name__)
 def IS_AUTHENTICATED(auth_header):
     daemondb = mysql.connector.connect(**db_settings)
     check_auth_key = daemondb.cursor()
-    check_auth_key.execute("SELECT * FROM daemon_keys WHERE d_key = %s", (auth_header))
+    check_auth_key.execute("SELECT * FROM daemon_keys WHERE d_key = %s", (auth_header,))
     check_auth_key.fetchall()
     if check_auth_key.rowcount == 0:
         daemondb.close()
@@ -115,19 +115,19 @@ def create_server():
     if not isinstance(req_data['server_id'], str):
         return jsonify({"error": {"http_code": 422, "description": "server_id must be a string."}}), 422
     check_serverid_exists = daemondb.cursor()
-    check_serverid_exists.execute("SELECT * FROM servers WHERE server_id = %s", (req_data['server_id']))
+    check_serverid_exists.execute("SELECT * FROM servers WHERE server_id = %s", (req_data['server_id'],))
     check_serverid_exists.fetchall()
     if check_serverid_exists.rowcount >= 1:
         return jsonify({"error": {"http_code": 422, "description": "Another server with this server_id already exists."}}), 422
     check_fabitimage_exists = daemondb.cursor()
-    check_fabitimage_exists.execute("SELECT * FROM images WHERE id = %s", (int(req_data['fabitimage_id'])))
+    check_fabitimage_exists.execute("SELECT * FROM images WHERE id = %s", (int(req_data['fabitimage_id']),))
     check_fabitimage_exists.fetchall()
     if check_fabitimage_exists.rowcount == 0:
         return jsonify({"error": {"http_code": 404, "description": "The inputted fabitimage_id doesn't exists."}}), 404
     queue_parameters = json.dumps(req_data)
     queue_action = "create_server"
     queuepush = daemondb.cursor()
-    queuepush.execute("INSERT INTO queue (action, parameters, being_processed) VALUES (%s, %s, %s)", (queue_action, queue_parameters, 0))
+    queuepush.execute("INSERT INTO queue (action, parameters, being_processed) VALUES (%s, %s, %s)", (queue_action, queue_parameters, 0,))
     daemondb.commit()
     daemondb.close()
     return jsonify({"success": {"http_code": 200, "description": "Server successfully queued for creation."}}), 200
@@ -163,7 +163,7 @@ def QueueManager():
         result = queue_cursor.fetchone()
         if queue_cursor.rowcount > 0:
            update_being_processed = daemondb.cursor()
-           update_being_processed.execute("UPDATE queue SET being_processed = 1 WHERE id = %s", (result['id']))
+           update_being_processed.execute("UPDATE queue SET being_processed = 1 WHERE id = %s", (result['id'],))
            daemondb.commit()
            
            queue_action = result['action']
@@ -191,7 +191,7 @@ def QueueManager():
                FABITIMAGE_PATH = ""
                FABITIMAGE_JSON = ""
                get_fabitimage = daemondb.cursor()
-               get_fabitimage.execute("SELECT * FROM images WHERE id = %s", (int(queue_parameters['fabitimage_id'])))
+               get_fabitimage.execute("SELECT * FROM images WHERE id = %s", (int(queue_parameters['fabitimage_id']),))
                get_fabitimage_result = get_fabitimage.fetchall()
                if get_fabitimage.rowcount > 0:
                    for image in get_fabitimage_result:
@@ -216,14 +216,14 @@ def QueueManager():
                        except Exception as e:
                            Logger("warn", "Failed to execute command '" + command + "' as root on server creation.")
                push_server = daemondb.cursor()
-               push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id) VALUES (%s, %s, %s, %s, %s)", (queue_parameters['server_id'], CONTAINER_ID, int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id'])))
+               push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id) VALUES (%s, %s, %s, %s, %s)", (queue_parameters['server_id'], CONTAINER_ID, int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id']),))
                daemondb.commit()
                    
            if queue_action == "delete_server":
                print("TODO")
                
            delete_queue = daemondb.cursor()
-           delete_queue.execute("DELETE FROM queue WHERE id = %s", (result['id']))
+           delete_queue.execute("DELETE FROM queue WHERE id = %s", (result['id'],))
            daemondb.commit()
            daemondb.close()
     
