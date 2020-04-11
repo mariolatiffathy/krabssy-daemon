@@ -51,14 +51,17 @@ def IS_AUTHENTICATED(auth_header):
         return False
     else:
         return True
-
-@app.route('/api')
-def api():
+        
+def CheckAuth():
     if request.headers.get('Authorization') is not None:
         if IS_AUTHENTICATED(request.headers.get('Authorization')) == False:
             return jsonify(RES_UNAUTHENTICATED), 403
     else:
         return jsonify(RES_UNAUTHENTICATED), 403
+
+@app.route('/api')
+def api():
+    CheckAuth()
     return jsonify({"error": {"http_code": 405}}), 405
 
 @app.route('/api/v1')
