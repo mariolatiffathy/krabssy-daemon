@@ -40,16 +40,29 @@ daemon_version = "v0.1-alpha"
 # Fixed responses
 RES_UNAUTHENTICATED = {"error": {"http_code": 403}}
 
+# Define the daemon DB settings. This dict will be passed as kwargs
+# ... More explaination: https://www.geeksforgeeks.org/python-passing-dictionary-as-keyword-arguments/?ref=rp
+# ... or see https://www.geeksforgeeks.org/connect-mysql-database-using-mysql-connector-python/ "Another way is to pass the dictionary in the connect() function using ‘**’ operator:" section.
+db_settings = {
+    "host": daemon_config['db']['host'],
+    "user": daemon_config['db']['user'],
+    "passwd": daemon_config['db']['password'],
+    "database": daemon_config['db']['name']
+}
+
 # Init Flask app
 app = Flask(__name__)
 
 def IS_AUTHENTICATED(auth_header):
+    daemondb = mysql.connector.connect(**db_settings)
     check_auth_key = daemondb.cursor()
     check_auth_key.execute("SELECT * FROM daemon_keys WHERE d_key = %s", (auth_header))
     check_auth_key.fetchall()
     if check_auth_key.rowcount == 0:
+        daemondb.close()
         return False
     else:
+        daemondb.close()
         return True
 
 @app.route('/api')
@@ -77,6 +90,7 @@ def create_server():
             return jsonify(RES_UNAUTHENTICATED), 403
     else:
         return jsonify(RES_UNAUTHENTICATED), 403
+    daemondb = mysql.connector.connect(**db_settings)
     req_data = request.get_json()
     required_data = ["allowed_ports", "server_id", "enable_ftp", "ram", "cpu", "disk", "startup_command", "fabitimage_id"]
     for required in required_data:
@@ -117,6 +131,7 @@ def create_server():
     queuepush = daemondb.cursor()
     queuepush.execute("INSERT INTO queue (action, parameters, being_processed) VALUES (%s, %s, %s)", (queue_action, queue_parameters, 0))
     daemondb.commit()
+    daemondb.close()
     return jsonify({"success": {"http_code": 200, "description": "Server successfully queued for creation."}}), 200
     
 # Flask Custom Errors
@@ -144,7 +159,7 @@ def AsUser(uid, gid):
 def QueueManager():
     while True:
         time.sleep(1)
-        daemondb = mysql.connector.connect(host=daemon_config['db']['host'], user=daemon_config['db']['user'], passwd=daemon_config['db']['password'], database=daemon_config['db']['name'])
+        daemondb = mysql.connector.connect(**db_settings)
         queue_cursor = daemondb.cursor()
         queue_cursor.execute("SELECT * FROM queue WHERE being_processed = 0")
         result = queue_cursor.fetchone()
@@ -228,10 +243,7 @@ if __name__ == '__main__':
     # Test the connection to the daemon DB
     try:
         daemondb_connection_test = mysql.connector.connect(
-        host=daemon_config['db']['host'],
-        user=daemon_config['db']['user'],
-        passwd=daemon_config['db']['password'],
-        database=daemon_config['db']['name']
+        **db_settings
        )
     except mysql.connector.errors.DatabaseError as e:
         Logger("error", "Unable to connect to the daemon database.")
