@@ -185,9 +185,9 @@ def QueueManager():
                subprocess.check_output(["setquota", CONTAINER_ID, str(int(queue_parameters['disk'])*1000), str(int(queue_parameters['disk'])*1000), "0", "0", filesystem])
                # Write kernel configurations
                with open("/etc/cgconfig.conf", "a+") as cgconfig:
-                   cgconfig.write(CGCONFIG_KERNEL_CFG)
+                   cgconfig.write("\n" + CGCONFIG_KERNEL_CFG)
                with open("/etc/cgrules.conf", "a+") as cgrules:
-                   cgrules.write(CONTAINER_ID + " memory,cpu " + CONTAINER_ID)
+                   cgrules.write("\n" + CONTAINER_ID + " memory,cpu " + CONTAINER_ID)
                # Get the FabitImage
                FABITIMAGE_PATH = ""
                FABITIMAGE_JSON = ""
