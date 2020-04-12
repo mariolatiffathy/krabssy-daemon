@@ -9,11 +9,11 @@ clear
 echo "Updating system and installing required packages..."
 if [  -n "$(uname -a | grep Ubuntu)" ]; then
     apt-get -y update
-    apt-get -y install git-core quota cgroup-tools libcgroup-dev
+    apt-get -y install git-core quota cgroup-tools libcgroup-dev screen
 else
     yum -y install https://centos7.iuscommunity.org/ius-release.rpm
     yum -y update
-    yum -y install git python36u python36u-libs python36u-devel python36u-pip libcgroup libcgroup-tools
+    yum -y install git screen python36u python36u-libs python36u-devel python36u-pip libcgroup libcgroup-tools
 fi
 
 clear
