@@ -263,8 +263,8 @@ def PortBindingPermissions():
                 connected = False
             finally:
                 if(connected and port != socket_s.getsockname()[1]):
-                    pid = int(subprocess.check_output("netstat -tulnp | awk '/:" + str(port) + " */ {split($NF,a,\"/\"); print a[2],a[1]}'".split(" ")).rstrip().split(" ")[1])
-                    pid_owner = subprocess.check_output("id -nu </proc/" + str(pid) + "/loginuid".split(" ")).rstrip() # Returns the username of the process owner
+                    pid = int(subprocess.check_output("netstat -tulnp | awk '/:" + str(port) + " */ {split($NF,a,\"/\"); print a[2],a[1]}'".split(" ")).decode().rstrip().split(" ")[1])
+                    pid_owner = subprocess.check_output("id -nu </proc/" + str(pid) + "/loginuid".split(" ")).decode().rstrip() # Returns the username of the process owner
                     if "fabitmanage-" in pid_owner:
                         # The process is owned by a daemon container... Now check if the container has permissions to bind on this port.
                         daemondb = mysql.connector.connect(**db_settings)
