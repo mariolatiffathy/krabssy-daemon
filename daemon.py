@@ -206,16 +206,18 @@ def QueueManager():
                # FABITIMAGE/PROCESS_EVENT on_create
                if "from_container" in FABITIMAGE_PARSED['events']['on_create']:
                    for command in FABITIMAGE_PARSED['events']['on_create']['from_container']:
+                       cmd = FABITIMAGE_PARSED['events']['on_create']['from_container'][command]
                        try:
-                           subprocess.check_output(command.split(" "), preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)), cwd="/home/fabitmanage/daemon-data/" + CONTAINER_ID)
+                           subprocess.check_output(cmd.split(" "), preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)), cwd="/home/fabitmanage/daemon-data/" + CONTAINER_ID)
                        except Exception as e:
-                           Logger("warn", "Failed to execute command '" + command + "' from container on server creation.")
+                           Logger("warn", "Failed to execute command '" + cmd + "' from container on server creation.")
                if "as_root" in FABITIMAGE_PARSED['events']['on_create']:
                    for command in FABITIMAGE_PARSED['events']['on_create']['as_root']:
+                       cmd = FABITIMAGE_PARSED['events']['on_create']['as_root'][command]
                        try:
-                           subprocess.check_output(command.split(" "), cwd="/home/fabitmanage/daemon-data/" + CONTAINER_ID)
+                           subprocess.check_output(cmd.split(" "), cwd="/home/fabitmanage/daemon-data/" + CONTAINER_ID)
                        except Exception as e:
-                           Logger("warn", "Failed to execute command '" + command + "' as root on server creation.")
+                           Logger("warn", "Failed to execute command '" + cmd + "' as root on server creation.")
                push_server = daemondb.cursor(dictionary=True)
                push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id) VALUES (%s, %s, %s, %s, %s)", (queue_parameters['server_id'], CONTAINER_ID, int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id']),))
                daemondb.commit()
