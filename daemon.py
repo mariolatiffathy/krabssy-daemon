@@ -221,7 +221,7 @@ def QueueManager():
                        except Exception as e:
                            Logger("warn", "Failed to execute command '" + cmd + "' as root on server creation.")
                push_server = daemondb.cursor(dictionary=True)
-               push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id) VALUES (%s, %s, %s, %s, %s)", (queue_parameters['server_id'], CONTAINER_ID, int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id']),))
+               push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id, startup_command) VALUES (%s, %s, %s, %s, %s, %s)", (str(queue_parameters['server_id']), str(CONTAINER_ID), int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id']), str(queue_parameters['startup_command']),))
                daemondb.commit()
                    
            if queue_action == "delete_server":

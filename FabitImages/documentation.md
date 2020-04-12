@@ -29,6 +29,6 @@ An example FabitImage can be found in this folder.
 
 ```
 "as_root": {
-    "chattr +u +i ./my_file.txt"         
+    "1": "chattr +u +i ./my_file.txt"         
 }
 ```
