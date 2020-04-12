@@ -276,8 +276,8 @@ def daemon_FTP():
         for server in get_servers_result:
             if not server['ftp_username'] in added_ftp_users:
                 ftp_authorizer.add_user(server['ftp_username'], server['ftp_password'], "/home/fabitmanage/daemon-data/" + server['container_id'], perm="elradfmwMT")
-   daemondb.close()
-   server.serve_forever()
+    daemondb.close()
+    server.serve_forever()
 
 if __name__ == '__main__':
     print("FabitManage Daemon " + daemon_version)
