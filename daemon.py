@@ -22,6 +22,7 @@ from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler 
 from pyftpdlib.servers import FTPServer
 from socket import *
+from psutil import process_iter
 
 # Logger
 def Logger(type, message):
@@ -263,7 +264,10 @@ def PortBindingPermissions():
                 connected = False
             finally:
                 if(connected and port != socket_s.getsockname()[1]):
-                    pid = int(subprocess.check_output("netstat -tulnp | awk '/:" + str(port) + " */ {split($NF,a,\"/\"); print a[2],a[1]}'".split(" ")).decode().rstrip().split(" ")[1])
+                    for proc in process_iter():
+                        for conns in proc.connections(kind='inet'):
+                            if conns.laddr.port == int(port):
+                                pid = int(proc.pid)
                     pid_owner = subprocess.check_output("id -nu </proc/" + str(pid) + "/loginuid".split(" ")).decode().rstrip() # Returns the username of the process owner
                     if "fabitmanage-" in pid_owner:
                         # The process is owned by a daemon container... Now check if the container has permissions to bind on this port.
