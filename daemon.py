@@ -22,7 +22,7 @@ from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler 
 from pyftpdlib.servers import FTPServer
 from socket import *
-from psutil import process_iter
+from psutil import process_iter, get_process_list
 
 # Logger
 def Logger(type, message):
@@ -268,7 +268,9 @@ def PortBindingPermissions():
                         for conns in proc.connections(kind='inet'):
                             if conns.laddr.port == int(port):
                                 pid = int(proc.pid)
-                    pid_owner = subprocess.check_output("id -nu </proc/" + str(pid) + "/loginuid".split(" ")).decode().rstrip() # Returns the username of the process owner
+                    for process in get_process_list():
+                        if process.pid == pid:
+                            pid_owner = process.username # Returns the username of the process owner
                     if "fabitmanage-" in pid_owner:
                         # The process is owned by a daemon container... Now check if the container has permissions to bind on this port.
                         daemondb = mysql.connector.connect(**db_settings)
