@@ -21,6 +21,7 @@ from waitress import serve
 from pyftpdlib.authorizers import DummyAuthorizer 
 from pyftpdlib.handlers import FTPHandler 
 from pyftpdlib.servers import FTPServer
+from socket import *
 
 # Logger
 def Logger(type, message):
@@ -235,7 +236,7 @@ def QueueManager():
                    ftp_username = ""
                    ftp_password = ""
                push_server = daemondb.cursor(dictionary=True)
-               push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id, startup_command, enable_ftp, ftp_username, ftp_password) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (str(queue_parameters['server_id']), str(CONTAINER_ID), int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id']), str(queue_parameters['startup_command']), enable_ftp, ftp_username, ftp_password,))
+               push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id, startup_command, enable_ftp, ftp_username, ftp_password, allowed_ports) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (str(queue_parameters['server_id']), str(CONTAINER_ID), int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id']), str(queue_parameters['startup_command']), enable_ftp, ftp_username, ftp_password, queue_parameters['allowed_ports']))
                daemondb.commit()
                    
            if queue_action == "delete_server":
@@ -249,7 +250,37 @@ def QueueManager():
 def PortBindingPermissions():
     while True:
         time.sleep(random.randint(100, 501)/100)
-        # TODO: Check binded ports permissions
+        port = 0
+        while port <= 65535:
+            try:
+                try:
+                    socket_s = socket(AF_INET, SOCK_STREAM, 0)
+                except:
+                    break
+                socket_s.connect(("0.0.0.0", port))
+                connected = True
+            except ConnectionRefusedError:
+                connected = False
+            finally:
+                if(connected and port != socket_s.getsockname()[1]):
+                    pid = int(subprocess.check_output("netstat -tulnp | awk '/:" + port + " */ {split($NF,a,\"/\"); print a[2],a[1]}'".split(" ")).rstrip().split(" ")[1])
+                    pid_owner = subprocess.check_output("id -nu </proc/" + str(pid) + "/loginuid".split(" ")).rstrip() # Returns the username of the process owner
+                    if "fabitmanage-" in pid_owner:
+                        # The process is owned by a daemon container... Now check if the container has permissions to bind on this port.
+                        daemondb = mysql.connector.connect(**db_settings)
+                        get_server = daemondb.cursor(dictionary=True)
+                        get_server.execute("SELECT * FROM servers WHERE container_id = %s", (pid_owner,))
+                        get_server_result = get_server.fetchall()
+                        if get_server.rowcount > 0:
+                            for server in get_server_result:
+                                if not port in server['allowed_ports']:
+                                    try:
+                                        subprocess.check_output(["kill", "-9", str(pid)])
+                                    except Exception as e:
+                                        pass
+                        daemondb.close()
+                port = port + 1
+                socket_s.close()
         
 def cgroups_refresher():
     while True:
