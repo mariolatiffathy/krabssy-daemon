@@ -14,6 +14,7 @@ import os
 import platform
 import sys
 import random
+import string
 import mysql.connector
 from flask import Flask, jsonify, request
 from waitress import serve
@@ -220,8 +221,16 @@ def QueueManager():
                            subprocess.check_output(cmd.split(" "), cwd="/home/fabitmanage/daemon-data/" + CONTAINER_ID)
                        except Exception as e:
                            Logger("warn", "Failed to execute command '" + cmd + "' as root on server creation.")
+               if queue_parameters['enable_ftp'] == True:
+                   enable_ftp = 1
+                   ftp_username = ''.join(random.choices(string.ascii_lowercase + string.digits, k=9))
+                   ftp_password = ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=16))
+               else:
+                   enable_ftp = 0
+                   ftp_username = ""
+                   ftp_password = ""
                push_server = daemondb.cursor(dictionary=True)
-               push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id, startup_command) VALUES (%s, %s, %s, %s, %s, %s)", (str(queue_parameters['server_id']), str(CONTAINER_ID), int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id']), str(queue_parameters['startup_command']),))
+               push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id, startup_command, enable_ftp, ftp_username, ftp_password) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (str(queue_parameters['server_id']), str(CONTAINER_ID), int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id']), str(queue_parameters['startup_command']), enable_ftp, ftp_username, ftp_password,))
                daemondb.commit()
                    
            if queue_action == "delete_server":
