@@ -274,8 +274,7 @@ def daemon_FTP():
     get_servers_result = get_servers.fetchall()
     if get_servers.rowcount > 0:
         for server in get_servers_result:
-            if not server['ftp_username'] in added_ftp_users:
-                ftp_authorizer.add_user(server['ftp_username'], server['ftp_password'], "/home/fabitmanage/daemon-data/" + server['container_id'], perm="elradfmwMT")
+            ftp_authorizer.add_user(server['ftp_username'], server['ftp_password'], "/home/fabitmanage/daemon-data/" + server['container_id'], perm="elradfmwMT")
     daemondb.close()
     server.serve_forever()
 
