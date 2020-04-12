@@ -177,7 +177,7 @@ def QueueManager():
                subprocess.check_output(['mkdir', '-p', '/home/fabitmanage/daemon-data/' + CONTAINER_ID])
                subprocess.check_output(["useradd", "-m", "-d", "/home/fabitmanage/daemon-data/" + CONTAINER_ID, "-p", crypt.crypt(str(uuid.uuid4()) + str(uuid.uuid4())), CONTAINER_ID])
                # Define the cgconfig kernel configuration
-               CGCONFIG_KERNEL_CFG = "group " + CONTAINER_ID + " { cpu { cpu.shares = " + str(queue_parameters['cpu']) + "; } memory { memory.memsw.limit_in_bytes = " + str(queue_parameters['ram']) + "m; } }"
+               CGCONFIG_KERNEL_CFG = "group " + CONTAINER_ID + " { cpu { cpu.shares = " + str(int(queue_parameters['cpu'])) + "; } memory { memory.limit_in_bytes = " + str(int(queue_parameters['ram'])) + "m; memory.memsw.limit_in_bytes = " + str(int(queue_parameters['ram'])) + "m; } }"
                # Get the filesystem of the partition /home
                FSCK = subprocess.check_output(['fsck', '-N', '/home'])
                filesystem = FSCK.decode().splitlines()[1].split(" ")[5].rstrip()
