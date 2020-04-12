@@ -264,10 +264,14 @@ def PortBindingPermissions():
                 connected = False
             finally:
                 if(connected and port != socket_s.getsockname()[1]):
-                    for proc in process_iter():
-                        for conns in proc.connections(kind='inet'):
-                            if conns.laddr.port == int(port):
-                                pid = int(proc.pid)
+                    pid = 0
+                    try:
+                        for proc in process_iter():
+                            for conns in proc.connections(kind='inet'):
+                                if conns.laddr.port == int(port):
+                                    pid = int(proc.pid)
+                    except Exception as e:
+                        pass
                     pid_owner = ""
                     try:
                         pid_owner = subprocess.check_output(['ps', '-o', 'user=', '-p', str(pid)]).decode().rstrip() # Returns the username of the process owner
@@ -306,7 +310,7 @@ def daemon_FTP():
     global ftp_authorizer
     handler = FTPHandler
     handler.authorizer = ftp_authorizer
-    server = FTPServer(("0.0.0.0", int(daemon_config['ftp_server']['port'])), handler)
+    ftpserv = FTPServer(("0.0.0.0", int(daemon_config['ftp_server']['port'])), handler)
     daemondb = mysql.connector.connect(**db_settings)
     get_servers = daemondb.cursor(dictionary=True)
     get_servers.execute("SELECT * FROM servers WHERE enable_ftp = 1")
@@ -315,7 +319,7 @@ def daemon_FTP():
         for server in get_servers_result:
             ftp_authorizer.add_user(server['ftp_username'], server['ftp_password'], "/home/fabitmanage/daemon-data/" + server['container_id'], perm="elradfmwMT")
     daemondb.close()
-    server.serve_forever()
+    ftpserv.serve_forever()
 
 if __name__ == '__main__':
     print("FabitManage Daemon " + daemon_version)
