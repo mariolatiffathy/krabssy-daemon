@@ -5,7 +5,8 @@ The daemon handles all the messages sent from the panel, and it also sends messa
 - To be edited...
 
 # Requirements
-- Python 3.6.8
+- Python 3.7.3
+- cgroups v1
 
 # Notes
-- All the tests were done on CentOS 7.7.1908
+- All the tests were done on Debian 10
