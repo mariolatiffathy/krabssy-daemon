@@ -257,6 +257,26 @@ def cgroups_refresher():
             subprocess.check_output(['service', 'cgred', 'restart'])
             subprocess.check_output(['service', 'cgconfig', 'restart'])
         time.sleep(int(daemon_config['cgroups']['refresher_interval']))
+        
+def daemon_FTP():
+    added_ftp_users = []
+    authorizer = DummyAuthorizer()
+    handler = FTPHandler
+    handler.authorizer = authorizer
+    server = FTPServer(("0.0.0.0", int(daemon_config['ftp_server']['port'])), handler)
+    server.serve_forever()
+    while True:
+        daemondb = mysql.connector.connect(**db_settings)
+        get_servers = daemondb.cursor(dictionary=True)
+        get_servers.execute("SELECT * FROM servers WHERE enable_ftp = 1")
+        get_servers_result = get_servers.fetchall()
+        if get_servers.rowcount > 0:
+            for server in get_servers_result:
+                if not server['ftp_username'] in added_ftp_users:
+                    authorizer.add_user(server['ftp_username'], server['ftp_password'], "/home/fabitmanage/daemon-data/" + server['container_id'], perm="elradfmwMT")
+                    added_ftp_users.append(server['ftp_username'])
+        daemondb.close()
+        time.sleep(15)
 
 if __name__ == '__main__':
     print("FabitManage Daemon " + daemon_version)
@@ -278,5 +298,7 @@ if __name__ == '__main__':
         PortBindingPermissions_t.start()
     cgroups_refresher_t = threading.Thread(target=cgroups_refresher, args=())
     cgroups_refresher_t.start()
+    daemon_ftp_t = threading.Thread(target=daemon_FTP, args=())
+    daemon_ftp_t.start()
     # Start Flask server
     serve(app, host="0.0.0.0", port=int(daemon_config['server']['port']))
