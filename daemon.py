@@ -52,6 +52,9 @@ db_settings = {
     "database": daemon_config['db']['name']
 }
 
+# Define the daemon FTP server authorizer globally
+ftp_authorizer = DummyAuthorizer()
+
 # Init Flask app
 app = Flask(__name__)
 
@@ -225,6 +228,8 @@ def QueueManager():
                    enable_ftp = 1
                    ftp_username = ''.join(random.choices(string.ascii_lowercase + string.digits, k=9))
                    ftp_password = ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=16))
+                   global ftp_authorizer
+                   ftp_authorizer.add_user(ftp_username, ftp_password, "/home/fabitmanage/daemon-data/" + CONTAINER_ID, perm="elradfmwMT")
                else:
                    enable_ftp = 0
                    ftp_username = ""
@@ -259,24 +264,20 @@ def cgroups_refresher():
         time.sleep(int(daemon_config['cgroups']['refresher_interval']))
         
 def daemon_FTP():
-    added_ftp_users = []
-    authorizer = DummyAuthorizer()
+    global ftp_authorizer
     handler = FTPHandler
-    handler.authorizer = authorizer
+    handler.authorizer = ftp_authorizer
     server = FTPServer(("0.0.0.0", int(daemon_config['ftp_server']['port'])), handler)
-    server.serve_forever()
-    while True:
-        daemondb = mysql.connector.connect(**db_settings)
-        get_servers = daemondb.cursor(dictionary=True)
-        get_servers.execute("SELECT * FROM servers WHERE enable_ftp = 1")
-        get_servers_result = get_servers.fetchall()
-        if get_servers.rowcount > 0:
-            for server in get_servers_result:
-                if not server['ftp_username'] in added_ftp_users:
-                    authorizer.add_user(server['ftp_username'], server['ftp_password'], "/home/fabitmanage/daemon-data/" + server['container_id'], perm="elradfmwMT")
-                    added_ftp_users.append(server['ftp_username'])
-        daemondb.close()
-        time.sleep(15)
+    daemondb = mysql.connector.connect(**db_settings)
+    get_servers = daemondb.cursor(dictionary=True)
+    get_servers.execute("SELECT * FROM servers WHERE enable_ftp = 1")
+    get_servers_result = get_servers.fetchall()
+    if get_servers.rowcount > 0:
+        for server in get_servers_result:
+            if not server['ftp_username'] in added_ftp_users:
+                ftp_authorizer.add_user(server['ftp_username'], server['ftp_password'], "/home/fabitmanage/daemon-data/" + server['container_id'], perm="elradfmwMT")
+   daemondb.close()
+   server.serve_forever()
 
 if __name__ == '__main__':
     print("FabitManage Daemon " + daemon_version)
