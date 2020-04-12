@@ -22,7 +22,7 @@ from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler 
 from pyftpdlib.servers import FTPServer
 from socket import *
-from psutil import process_iter, get_process_list
+from psutil import process_iter
 
 # Logger
 def Logger(type, message):
@@ -268,7 +268,7 @@ def PortBindingPermissions():
                         for conns in proc.connections(kind='inet'):
                             if conns.laddr.port == int(port):
                                 pid = int(proc.pid)
-                    for process in get_process_list():
+                    for process in process_iter():
                         if process.pid == pid:
                             pid_owner = process.username # Returns the username of the process owner
                     if "fabitmanage-" in pid_owner:
