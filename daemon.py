@@ -236,7 +236,7 @@ def QueueManager():
                    ftp_username = ""
                    ftp_password = ""
                push_server = daemondb.cursor(dictionary=True)
-               push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id, startup_command, enable_ftp, ftp_username, ftp_password, allowed_ports) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (str(queue_parameters['server_id']), str(CONTAINER_ID), int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id']), str(queue_parameters['startup_command']), enable_ftp, ftp_username, ftp_password, queue_parameters['allowed_ports']))
+               push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id, startup_command, enable_ftp, ftp_username, ftp_password, allowed_ports) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (str(queue_parameters['server_id']), str(CONTAINER_ID), int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id']), str(queue_parameters['startup_command']), enable_ftp, ftp_username, ftp_password, queue_parameters['allowed_ports'],))
                daemondb.commit()
                    
            if queue_action == "delete_server":
@@ -263,7 +263,7 @@ def PortBindingPermissions():
                 connected = False
             finally:
                 if(connected and port != socket_s.getsockname()[1]):
-                    pid = int(subprocess.check_output("netstat -tulnp | awk '/:" + port + " */ {split($NF,a,\"/\"); print a[2],a[1]}'".split(" ")).rstrip().split(" ")[1])
+                    pid = int(subprocess.check_output("netstat -tulnp | awk '/:" + str(port) + " */ {split($NF,a,\"/\"); print a[2],a[1]}'".split(" ")).rstrip().split(" ")[1])
                     pid_owner = subprocess.check_output("id -nu </proc/" + str(pid) + "/loginuid".split(" ")).rstrip() # Returns the username of the process owner
                     if "fabitmanage-" in pid_owner:
                         # The process is owned by a daemon container... Now check if the container has permissions to bind on this port.
@@ -273,7 +273,7 @@ def PortBindingPermissions():
                         get_server_result = get_server.fetchall()
                         if get_server.rowcount > 0:
                             for server in get_server_result:
-                                if not port in server['allowed_ports']:
+                                if not str(port) in server['allowed_ports']:
                                     try:
                                         subprocess.check_output(["kill", "-9", str(pid)])
                                     except Exception as e:
