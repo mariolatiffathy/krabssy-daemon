@@ -342,6 +342,15 @@ def QueueManager():
                    subprocess.check_output(['screen', '-S', CONTAINER_ID, '-X', 'quit'])
                except Exception as e:
                    pass
+               # Remove all the restrictions of the container daemon-data directory
+               try:
+                   subprocess.check_output(['chattr', '-u', '-i', "/home/fabitmanage/daemon-data/" + CONTAINER_ID])
+               except Exception as e:
+                   pass
+               try:
+                   subprocess.check_output(['chattr', '-u', '-i', "/home/fabitmanage/daemon-data/" + CONTAINER_ID + "/*"])
+               except Exception as e:
+                   pass
                # Force delete the container with its daemon-data directory
                try:
                    subprocess.check_output(['userdel', '-r', '-f', CONTAINER_ID])
