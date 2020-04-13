@@ -209,7 +209,7 @@ def server(server_id):
                 else:
                     SERVER_ALLOWED_PORTS = server['allowed_ports']
         for proc in process_iter():
-            if proc.username() == SERVER_CONTAINER_ID:
+            if proc.username() == SERVER_CONTAINER_ID and proc.name() != "sh":
                 IS_SERVER_ONLINE = True
                 MEM_INFO = proc.memory_info()
                 USED_PHYSICAL = MEM_INFO.rss / 1000000
