@@ -351,10 +351,13 @@ def PortBindingPermissions():
                     pid_owner = ""
                     try:
                         for proc in process_iter():
-                            for conns in proc.connections(kind='all'):
-                                if conns.laddr.port == int(port):
-                                    pid = int(proc.pid)
-                                    pid_owner = proc.username()
+                            try:
+                                for conns in proc.connections(kind='all'):
+                                    if conns.laddr.port == int(port):
+                                        pid = int(proc.pid)
+                                        pid_owner = proc.username()
+                            except Exception as e:
+                                pass
                     except Exception as e:
                         pass
                     if "fabitmanage-" in pid_owner:
