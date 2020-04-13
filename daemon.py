@@ -163,7 +163,7 @@ def server(server_id):
     check_serverid_exists = daemondb.cursor(dictionary=True)
     check_serverid_exists.execute("SELECT * FROM servers WHERE server_id = %s", (server_id,))
     check_serverid_exists.fetchall()
-    if check_serverid_exists.rowcount >= 1:
+    if check_serverid_exists.rowcount == 0:
         return jsonify({"error": {"http_code": 404, "description": "This server doesn't exists."}}), 404
     # METHOD/DELETE
     if request.method == 'DELETE':
