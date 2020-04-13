@@ -220,6 +220,63 @@ def server(server_id):
         return jsonify({"success": {"http_code": 200, "description": ""}, "server": {"is_online": IS_SERVER_ONLINE, "container_id": SERVER_CONTAINER_ID, "fabitimage_id": SERVER_FABITIMAGE_ID, "allowed_ports": SERVER_ALLOWED_PORTS, "startup_command": SERVER_STARTUP_COMMAND, "ftp_enabled": SERVER_FTP_ENABLED, "ftp_username": SERVER_FTP_USERNAME, "ftp_password": SERVER_FTP_PASSWORD, "used_memory": SERVER_USED_MEMORY, "total_memory": SERVER_TOTAL_MEMORY, "used_disk": SERVER_USED_DISK, "total_disk": SERVER_TOTAL_DISK, "used_cpu": SERVER_USED_CPU, "total_cpu": SERVER_TOTAL_CPU}}), 200
     daemondb.close()
     
+@app.route('/api/v1/servers/<server_id>/power', methods=['POST'])
+def server_power(server_id):
+    if request.headers.get('Authorization') is not None:
+        if IS_AUTHENTICATED(request.headers.get('Authorization')) == False:
+            return jsonify(RES_UNAUTHENTICATED), 403
+    else:
+        return jsonify(RES_UNAUTHENTICATED), 403
+    if not server_id or server_id == "":
+        return jsonify({"error": {"http_code": 422, "description": "You are missing a required field."}}), 422
+    req_data = request.get_json()
+    if not "action" in req_data:
+        return jsonify({"error": {"http_code": 422, "description": "You are missing a required field."}}), 422
+    if req_data['action'] != "start" and req_data['action'] != "stop" and req_data['action'] != "restart":
+        return jsonify({"error": {"http_code": 422, "description": "Invalid power action."}}), 422
+    daemondb = mysql.connector.connect(**db_settings)
+    check_serverid_exists = daemondb.cursor(dictionary=True)
+    check_serverid_exists.execute("SELECT * FROM servers WHERE server_id = %s", (server_id,))
+    check_serverid_exists.fetchall()
+    if check_serverid_exists.rowcount == 0:
+        return jsonify({"error": {"http_code": 404, "description": "This server doesn't exists."}}), 404
+    SERVER_CONTAINER_ID = ""
+    SERVER_STARTUP_COMMAND = ""
+    get_server = daemondb.cursor(dictionary=True)
+    get_server.execute("SELECT * FROM servers WHERE server_id = %s", (server_id,))
+    get_server_result = get_server.fetchall()
+    if get_server.rowcount > 0:
+        for server in get_server_result:
+            SERVER_CONTAINER_ID = server['container_id']
+            SERVER_STARTUP_COMMAND = server['startup_command']
+    if req_data['action'] == "start":
+        if "1" in subprocess.check_output("screen -S " + SERVER_CONTAINER_ID + " -X select . ; echo $?".split(" ")).decode():
+            # No screen session for the container is running... Start it now
+            subprocess.check_output(['screen', '-d', '-m', '-S', SERVER_CONTAINER_ID])
+            subprocess.check_output("screen -S " + SERVER_CONTAINER_ID + " -X stuff '" + SERVER_STARTUP_COMMAND + "'$(echo -ne '\015')".split(" "))
+            return jsonify({"success": {"http_code": 200, "description": "Server successfully started."}}), 200
+        else:
+            return jsonify({"error": {"http_code": 422, "description": "The server is already running."}}), 422
+    if req_data['action'] == "stop":
+        if "0" in subprocess.check_output("screen -S " + SERVER_CONTAINER_ID + " -X select . ; echo $?".split(" ")).decode():
+            # A screen session for the container is running... Kill it now
+            subprocess.check_output(['screen', '-S', SERVER_CONTAINER_ID, '-X', 'quit'])
+            return jsonify({"success": {"http_code": 200, "description": "Server successfully stopped."}}), 200
+        else:
+            return jsonify({"error": {"http_code": 422, "description": "The server is already stopped."}}), 422
+    if req_data['action'] == "restart":
+        try:
+            subprocess.check_output(['screen', '-S', SERVER_CONTAINER_ID, '-X', 'quit'])
+        except Exception as e:
+            pass
+        try:
+            subprocess.check_output(['screen', '-d', '-m', '-S', SERVER_CONTAINER_ID])
+            subprocess.check_output("screen -S " + SERVER_CONTAINER_ID + " -X stuff '" + SERVER_STARTUP_COMMAND + "'$(echo -ne '\015')".split(" "))
+        except Exception as e:
+            pass
+        return jsonify({"success": {"http_code": 200, "description": "Server successfully restarted."}}), 200
+    daemondb.close()
+    
 # Flask Custom Errors
 @app.errorhandler(404)
 def daemon_err_404(e):
