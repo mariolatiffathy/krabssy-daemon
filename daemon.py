@@ -349,7 +349,7 @@ def QueueManager():
                    pass
                # Delete the cgroups kernel configurations and rules of the container
                delete_cgroups = daemondb.cursor(dictionary=True)
-               delete_cgroups.execute("DELETE FROM cgroups_files WHERE line LIKE '%%%s%%'", (CONTAINER_ID,))
+               delete_cgroups.execute("DELETE FROM cgroups_files WHERE line LIKE '%" + CONTAINER_ID + "%'")
                daemondb.commit()
                # Make sure the daemon-data directory of the container was deleted
                try:
