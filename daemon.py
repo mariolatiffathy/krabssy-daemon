@@ -245,6 +245,7 @@ def AsUser(uid, gid):
 def QueueManager():
     while True:
         time.sleep(random.randint(100, 501)/100)
+        global ftp_authorizer
         daemondb = mysql.connector.connect(**db_settings)
         queue_cursor = daemondb.cursor(dictionary=True)
         queue_cursor.execute("SELECT * FROM queue WHERE being_processed = 0")
@@ -313,7 +314,6 @@ def QueueManager():
                    enable_ftp = 1
                    ftp_username = ''.join(random.choices(string.ascii_lowercase + string.digits, k=9))
                    ftp_password = ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=16))
-                   global ftp_authorizer
                    ftp_authorizer.add_user(ftp_username, ftp_password, "/home/fabitmanage/daemon-data/" + CONTAINER_ID, perm="elradfmwMT")
                else:
                    enable_ftp = 0
@@ -358,7 +358,6 @@ def QueueManager():
                    pass
                # Remove the container's FTP if enabled
                if IS_FTP_ENABLED == True:
-                   global ftp_authorizer
                    ftp_authorizer.remove_user(FTP_USERNAME)
                # Remove the server from the daemon DB
                delete_server = daemondb.cursor(dictionary=True)
