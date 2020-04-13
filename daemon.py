@@ -348,18 +348,14 @@ def PortBindingPermissions():
                 if(connected and port != socket_s.getsockname()[1]):
                     pid = 0
                     pid_owner = ""
-                    try:
-                        for proc in process_iter():
-                            try:
-                                for conns in proc.connections(kind='all'):
-                                    if conns.laddr.port == int(port):
-                                        pid = int(proc.pid)
-                                        pid_owner = proc.username()
-                                        break
-                            except Exception as e:
-                                pass
-                    except Exception as e:
-                        pass
+                    for proc in process_iter():
+                        try:
+                            for conns in proc.connections(kind='all'):
+                                if conns.laddr.port == int(port):
+                                    pid = int(proc.pid)
+                                    pid_owner = proc.username()
+                        except Exception as e:
+                            pass
                     if "fabitmanage-" in pid_owner:
                         # The process is owned by a daemon container... Now check if the container has permissions to bind on this port.
                         daemondb = mysql.connector.connect(**db_settings)
