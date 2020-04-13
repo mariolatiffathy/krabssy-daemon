@@ -383,7 +383,10 @@ def cgroups_refresher():
             with open('/etc/cgconfig.conf', 'w'): pass
         if 'ubuntu' in platform.platform().lower() or 'debian' in platform.platform().lower():
             subprocess.check_output(['cgconfigparser', '-l', '/etc/cgconfig.conf'])
-            subprocess.check_output(['killall', 'cgrulesengd'])
+            try:
+                subprocess.check_output(['killall', 'cgrulesengd'])
+            except Exception as e:
+                pass
             subprocess.check_output(['cgrulesengd'])
         else:
             subprocess.check_output(['service', 'cgred', 'restart'])
