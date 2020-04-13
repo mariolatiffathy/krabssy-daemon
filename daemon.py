@@ -321,6 +321,7 @@ def QueueManager():
                push_server = daemondb.cursor(dictionary=True)
                push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id, startup_command, enable_ftp, ftp_username, ftp_password, allowed_ports, disk, cpu, ram) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (str(queue_parameters['server_id']), str(CONTAINER_ID), int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id']), str(queue_parameters['startup_command']), enable_ftp, ftp_username, ftp_password, queue_parameters['allowed_ports'], int(queue_parameters['disk']), int(queue_parameters['cpu']), int(queue_parameters['ram']),))
                daemondb.commit()
+               Logger("info", "Created server with container ID " + CONTAINER_ID)
                    
            if queue_action == "delete_server":
                print("TODO")
