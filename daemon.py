@@ -33,6 +33,17 @@ def Logger(type, message):
     if type == "info":
         TYPE_TAG = "[INFORMATION]"
     print("[DAEMON] " + TYPE_TAG + " " + message)
+    
+# Functions
+def get_size(start_path = '.'):
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(start_path): 
+        for f in filenames: 
+            fp = os.path.join(dirpath, f) 
+            # skip if it is symbolic link 
+            if not os.path.islink(fp): 
+                total_size += os.path.getsize(fp) 
+    return total_size
 
 # Load daemon configuration file
 daemon_config = configparser.ConfigParser()
@@ -139,6 +150,76 @@ def create_server():
     daemondb.close()
     return jsonify({"success": {"http_code": 200, "description": "Server successfully queued for creation."}}), 200
     
+@app.route('/api/v1/servers/<server_id>', methods=['GET', 'DELETE'])
+def server(server_id):
+    if request.headers.get('Authorization') is not None:
+        if IS_AUTHENTICATED(request.headers.get('Authorization')) == False:
+            return jsonify(RES_UNAUTHENTICATED), 403
+    else:
+        return jsonify(RES_UNAUTHENTICATED), 403
+    if not server_id or server_id == "":
+        return jsonify({"error": {"http_code": 422, "description": "You are missing a required field."}}), 422
+    daemondb = mysql.connector.connect(**db_settings)
+    check_serverid_exists = daemondb.cursor(dictionary=True)
+    check_serverid_exists.execute("SELECT * FROM servers WHERE server_id = %s", (server_id,))
+    check_serverid_exists.fetchall()
+    if check_serverid_exists.rowcount >= 1:
+        return jsonify({"error": {"http_code": 404, "description": "This server doesn't exists."}}), 404
+    # METHOD/DELETE
+    if request.method == 'DELETE':
+        queue_parameters = json.dumps({"server_id": server_id})
+        queue_action = "delete_server"
+        queuepush = daemondb.cursor(dictionary=True)
+        queuepush.execute("INSERT INTO queue (action, parameters, being_processed) VALUES (%s, %s, %s)", (queue_action, queue_parameters, 0,))
+        daemondb.commit()
+        return jsonify({"success": {"http_code": 200, "description": "Server successfully queued for deletion."}}), 200
+    # METHOD/GET
+    if request.method == 'GET':
+        IS_SERVER_ONLINE = False
+        SERVER_CONTAINER_ID = ""
+        SERVER_FABITIMAGE_ID = 0
+        SERVER_ALLOWED_PORTS = ""
+        SERVER_STARTUP_COMMAND = ""
+        SERVER_FTP_ENABLED = False
+        SERVER_FTP_USERNAME = ""
+        SERVER_FTP_PASSWORD = ""
+        SERVER_USED_MEMORY = 0
+        SERVER_TOTAL_MEMORY = 0
+        SERVER_USED_DISK = 0
+        SERVER_TOTAL_DISK = 0
+        SERVER_USED_CPU = 0
+        SERVER_TOTAL_CPU = 0
+        get_server = daemondb.cursor(dictionary=True)
+        get_server.execute("SELECT * FROM servers WHERE server_id = %s", (server_id,))
+        get_server_result = get_server.fetchall()
+        if get_server.rowcount > 0:
+            for server in get_server_result:
+                SERVER_CONTAINER_ID = server['container_id']
+                SERVER_FABITIMAGE_ID = server['fabitimage_id']
+                SERVER_STARTUP_COMMAND = server['startup_command']
+                SERVER_TOTAL_MEMORY = server['ram']
+                SERVER_TOTAL_DISK = server['disk']
+                SERVER_TOTAL_CPU = server['cpu']
+                if server['enable_ftp'] == 1:
+                    SERVER_FTP_ENABLED = True
+                    SERVER_FTP_USERNAME = server['ftp_username']
+                    SERVER_FTP_PASSWORD = server['ftp_password']
+                if "," in server['allowed_ports']:
+                    SERVER_ALLOWED_PORTS = server['allowed_ports'].split(',')
+                else:
+                    SERVER_ALLOWED_PORTS = server['allowed_ports']
+        for proc in process_iter():
+            if proc.username() == SERVER_CONTAINER_ID:
+                IS_SERVER_ONLINE = True
+                MEM_INFO = proc.memory_info()
+                USED_PHYSICAL = MEM_INFO.rss / 1000000
+                USED_SWAP = MEM_INFO.vms / 1000000
+                SERVER_USED_MEMORY = SERVER_USED_MEMORY + USED_PHYSICAL + USED_SWAP
+                SERVER_USED_CPU = SERVER_USED_CPU + proc.cpu_percent()
+        SERVER_USED_DISK = get_size('/home/fabitmanage/daemon-data/' + SERVER_CONTAINER_ID) / 1000000
+        return jsonify({"success": {"http_code": 200, "description": ""}, "server": {"is_online": IS_SERVER_ONLINE, "container_id": SERVER_CONTAINER_ID, "fabitimage_id": SERVER_FABITIMAGE_ID, "allowed_ports": SERVER_ALLOWED_PORTS, "startup_command": SERVER_STARTUP_COMMAND, "ftp_enabled": SERVER_FTP_ENABLED, "ftp_username": SERVER_FTP_USERNAME, "ftp_password": SERVER_FTP_PASSWORD, "used_memory": SERVER_USED_MEMORY, "total_memory": SERVER_TOTAL_MEMORY, "used_disk": SERVER_USED_DISK, "total_disk": SERVER_TOTAL_DISK, "used_cpu": SERVER_USED_CPU, "total_cpu": SERVER_TOTAL_CPU}}), 200
+    daemondb.close()
+    
 # Flask Custom Errors
 @app.errorhandler(404)
 def daemon_err_404(e):
@@ -239,7 +320,7 @@ def QueueManager():
                    ftp_username = ""
                    ftp_password = ""
                push_server = daemondb.cursor(dictionary=True)
-               push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id, startup_command, enable_ftp, ftp_username, ftp_password, allowed_ports) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (str(queue_parameters['server_id']), str(CONTAINER_ID), int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id']), str(queue_parameters['startup_command']), enable_ftp, ftp_username, ftp_password, queue_parameters['allowed_ports'],))
+               push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id, startup_command, enable_ftp, ftp_username, ftp_password, allowed_ports, disk, cpu, ram) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (str(queue_parameters['server_id']), str(CONTAINER_ID), int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id']), str(queue_parameters['startup_command']), enable_ftp, ftp_username, ftp_password, queue_parameters['allowed_ports'], int(queue_parameters['disk']), int(queue_parameters['cpu']), int(queue_parameters['ram']),))
                daemondb.commit()
                    
            if queue_action == "delete_server":
@@ -267,16 +348,13 @@ def PortBindingPermissions():
             finally:
                 if(connected and port != socket_s.getsockname()[1]):
                     pid = 0
-                    try:
-                        for proc in process_iter():
-                            for conns in proc.connections(kind='inet'):
-                                if conns.laddr.port == int(port):
-                                    pid = int(proc.pid)
-                    except Exception as e:
-                        pass
                     pid_owner = ""
                     try:
-                        pid_owner = subprocess.check_output(['ps', '-o', 'user=', '-p', str(pid)]).decode().rstrip() # Returns the username of the process owner
+                        for proc in process_iter():
+                            for conns in proc.connections(kind='all'):
+                                if conns.laddr.port == int(port):
+                                    pid = int(proc.pid)
+                                    pid_owner = proc.username()
                     except Exception as e:
                         pass
                     if "fabitmanage-" in pid_owner:
