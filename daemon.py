@@ -192,10 +192,12 @@ def QueueManager():
                # Set disk quota for the container
                subprocess.check_output(["setquota", CONTAINER_ID, str(int(queue_parameters['disk'])*1000), str(int(queue_parameters['disk'])*1000), "0", "0", filesystem])
                # Write kernel configurations
-               with open("/etc/cgconfig.conf", "a+") as cgconfig:
-                   cgconfig.write("\n" + CGCONFIG_KERNEL_CFG)
-               with open("/etc/cgrules.conf", "a+") as cgrules:
-                   cgrules.write("\n" + CONTAINER_ID + " memory,cpu " + CONTAINER_ID)
+               push_cgconfig = daemondb.cursor(dictionary=True)
+               push_cgconfig.execute("INSERT INTO cgroups_files (file, line) VALUES (%s, %s)", ("cgconfig", CGCONFIG_KERNEL_CFG,))
+               daemondb.commit()
+               push_cgrules = daemondb.cursor(dictionary=True)
+               push_cgrules.execute("INSERT INTO cgroups_files (file, line) VALUES (%s, %s)", ("cgrules", CONTAINER_ID + " memory,cpu " + CONTAINER_ID,))
+               daemondb.commit()
                # Get the FabitImage
                FABITIMAGE_PATH = ""
                FABITIMAGE_JSON = ""
@@ -307,6 +309,27 @@ def cgroups_refresher():
             subprocess.check_output(['service', 'cgconfig', 'restart'])
         time.sleep(int(daemon_config['cgroups']['refresher_interval']))
         
+def cgroups_writer():
+    while True:
+        cgconfig = ""
+        cgrules = ""
+        daemondb = mysql.connector.connect(**db_settings)
+        get_lines = daemondb.cursor(dictionary=True)
+        get_lines.execute("SELECT * FROM cgroups_files")
+        get_lines_result = get_lines.fetchall()
+        if get_lines.rowcount > 0:
+            for line in get_lines_result:
+                if line['file'] == "cgconfig":
+                    cgconfig = cgconfig + line['line'] + "\n"
+                if line['file'] == "cgrules":
+                    cgrules = cgrules + line['line'] + "\n"
+        daemondb.close()
+        with open('/etc/cgconfig.conf', 'w+') as cgconfig_f: 
+            cgconfig_f.write(cgconfig)
+        with open('/etc/cgrules.conf', 'w+') as cgrules_f: 
+            cgrules_f.write(cgrules)
+        time.sleep(int(daemon_config['cgroups']['writer_interval']))
+        
 def daemon_FTP():
     global ftp_authorizer
     handler = FTPHandler
@@ -342,6 +365,8 @@ if __name__ == '__main__':
         PortBindingPermissions_t.start()
     cgroups_refresher_t = threading.Thread(target=cgroups_refresher, args=())
     cgroups_refresher_t.start()
+    cgroups_writer_t = threading.Thread(target=cgroups_writer, args=())
+    cgroups_writer_t.start()
     daemon_ftp_t = threading.Thread(target=daemon_FTP, args=())
     daemon_ftp_t.start()
     # Start Flask server
