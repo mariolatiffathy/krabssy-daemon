@@ -331,6 +331,8 @@ def QueueManager():
            daemondb.close()
     
 def PortBindingPermissions():
+    # Thanks to https://stackoverflow.com/a/37968428/8524395
+    # Thanks to https://stackoverflow.com/a/20691431/8524395
     while True:
         time.sleep(random.randint(100, 501)/100)
         port = 0
@@ -441,9 +443,8 @@ if __name__ == '__main__':
     for _ in range(int(daemon_config['threads']['queuemanager_threads'])):
         QueueManager_t = threading.Thread(target=QueueManager, args=())
         QueueManager_t.start()
-    for _ in range(int(daemon_config['threads']['portbindingpermissions_threads'])):
-        PortBindingPermissions_t = threading.Thread(target=PortBindingPermissions, args=())
-        PortBindingPermissions_t.start()
+    PortBindingPermissions_t = threading.Thread(target=PortBindingPermissions, args=())
+    PortBindingPermissions_t.start()
     cgroups_refresher_t = threading.Thread(target=cgroups_refresher, args=())
     cgroups_refresher_t.start()
     cgroups_writer_t = threading.Thread(target=cgroups_writer, args=())
