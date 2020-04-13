@@ -370,6 +370,7 @@ def PortBindingPermissions():
                                 if not str(port) in server['allowed_ports']:
                                     try:
                                         subprocess.check_output(["kill", "-9", str(pid)])
+                                        Logger("info", "Terminated container " + pid_owner + ":" + str(pid) + " for listening on an disallowed port " + str(port))
                                     except Exception as e:
                                         pass
                         daemondb.close()
