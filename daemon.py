@@ -213,8 +213,7 @@ def server(server_id):
                 IS_SERVER_ONLINE = True
                 MEM_INFO = proc.memory_info()
                 USED_PHYSICAL = MEM_INFO.rss / 1000000
-                USED_SWAP = MEM_INFO.vms / 1000000
-                SERVER_USED_MEMORY = SERVER_USED_MEMORY + USED_PHYSICAL + USED_SWAP
+                SERVER_USED_MEMORY = SERVER_USED_MEMORY + USED_PHYSICAL
                 SERVER_USED_CPU = SERVER_USED_CPU + proc.cpu_percent()
         SERVER_USED_DISK = get_size('/home/fabitmanage/daemon-data/' + SERVER_CONTAINER_ID) / 1000000
         return jsonify({"success": {"http_code": 200, "description": ""}, "server": {"is_online": IS_SERVER_ONLINE, "container_id": SERVER_CONTAINER_ID, "fabitimage_id": SERVER_FABITIMAGE_ID, "allowed_ports": SERVER_ALLOWED_PORTS, "startup_command": SERVER_STARTUP_COMMAND, "ftp_enabled": SERVER_FTP_ENABLED, "ftp_username": SERVER_FTP_USERNAME, "ftp_password": SERVER_FTP_PASSWORD, "used_memory": SERVER_USED_MEMORY, "total_memory": SERVER_TOTAL_MEMORY, "used_disk": SERVER_USED_DISK, "total_disk": SERVER_TOTAL_DISK, "used_cpu": SERVER_USED_CPU, "total_cpu": SERVER_TOTAL_CPU}}), 200
