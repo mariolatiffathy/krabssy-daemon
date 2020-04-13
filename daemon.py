@@ -355,6 +355,7 @@ def PortBindingPermissions():
                                     if conns.laddr.port == int(port):
                                         pid = int(proc.pid)
                                         pid_owner = proc.username()
+                                        break
                             except Exception as e:
                                 pass
                     except Exception as e:
