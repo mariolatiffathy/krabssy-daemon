@@ -250,15 +250,15 @@ def server_power(server_id):
             SERVER_CONTAINER_ID = server['container_id']
             SERVER_STARTUP_COMMAND = server['startup_command']
     if req_data['action'] == "start":
-        if "1" in subprocess.check_output("screen -S " + SERVER_CONTAINER_ID + " -X select . ; echo $?".split(" ")).decode():
+        if "1" in subprocess.check_output(("screen -S " + SERVER_CONTAINER_ID + " -X select . ; echo $?").split(" ")).decode():
             # No screen session for the container is running... Start it now
             subprocess.check_output(['screen', '-d', '-m', '-S', SERVER_CONTAINER_ID])
-            subprocess.check_output("screen -S " + SERVER_CONTAINER_ID + " -X stuff '" + SERVER_STARTUP_COMMAND + "'$(echo -ne '\015')".split(" "))
+            subprocess.check_output(("screen -S " + SERVER_CONTAINER_ID + " -X stuff '" + SERVER_STARTUP_COMMAND + "'$(echo -ne '\015')").split(" "))
             return jsonify({"success": {"http_code": 200, "description": "Server successfully started."}}), 200
         else:
             return jsonify({"error": {"http_code": 422, "description": "The server is already running."}}), 422
     if req_data['action'] == "stop":
-        if "0" in subprocess.check_output("screen -S " + SERVER_CONTAINER_ID + " -X select . ; echo $?".split(" ")).decode():
+        if "0" in subprocess.check_output(("screen -S " + SERVER_CONTAINER_ID + " -X select . ; echo $?").split(" ")).decode():
             # A screen session for the container is running... Kill it now
             subprocess.check_output(['screen', '-S', SERVER_CONTAINER_ID, '-X', 'quit'])
             return jsonify({"success": {"http_code": 200, "description": "Server successfully stopped."}}), 200
@@ -271,7 +271,7 @@ def server_power(server_id):
             pass
         try:
             subprocess.check_output(['screen', '-d', '-m', '-S', SERVER_CONTAINER_ID])
-            subprocess.check_output("screen -S " + SERVER_CONTAINER_ID + " -X stuff '" + SERVER_STARTUP_COMMAND + "'$(echo -ne '\015')".split(" "))
+            subprocess.check_output(("screen -S " + SERVER_CONTAINER_ID + " -X stuff '" + SERVER_STARTUP_COMMAND + "'$(echo -ne '\015')").split(" "))
         except Exception as e:
             pass
         return jsonify({"success": {"http_code": 200, "description": "Server successfully restarted."}}), 200
