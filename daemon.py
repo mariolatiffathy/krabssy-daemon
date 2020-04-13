@@ -344,12 +344,12 @@ def QueueManager():
                    pass
                # Force delete the container with its daemon-data directory
                try:
-                   subprocess.check_output(['userdel', '-Z', '-r', '-f', CONTAINER_ID])
+                   subprocess.check_output(['userdel', '-r', '-f', CONTAINER_ID])
                except Exception as e:
                    pass
                # Delete the cgroups kernel configurations and rules of the container
                delete_cgroups = daemondb.cursor(dictionary=True)
-               delete_cgroups.execute("DELETE FROM cgroups_files WHERE line LIKE %%%s%%", (CONTAINER_ID,))
+               delete_cgroups.execute("DELETE FROM cgroups_files WHERE line LIKE '%%%s%%'", (CONTAINER_ID,))
                daemondb.commit()
                # Make sure the daemon-data directory of the container was deleted
                try:
