@@ -16,6 +16,7 @@ import sys
 import random
 import string
 import mysql.connector
+import atexit
 from flask import Flask, jsonify, request
 from waitress import serve
 from pyftpdlib.authorizers import DummyAuthorizer 
@@ -209,7 +210,7 @@ def server(server_id):
                 else:
                     SERVER_ALLOWED_PORTS = server['allowed_ports']
         for proc in process_iter():
-            if proc.username() == SERVER_CONTAINER_ID and proc.name() != "sh":
+            if proc.username() == SERVER_CONTAINER_ID and proc.name() != "sh" and proc.name() != "bash":
                 IS_SERVER_ONLINE = True
                 MEM_INFO = proc.memory_info()
                 USED_PHYSICAL = MEM_INFO.rss / 1000000
@@ -324,7 +325,46 @@ def QueueManager():
                Logger("info", "Created server with container ID " + CONTAINER_ID)
                    
            if queue_action == "delete_server":
-               print("TODO")
+               CONTAINER_ID = ""
+               IS_FTP_ENABLED = False
+               FTP_USERNAME = ""
+               get_server = daemondb.cursor(dictionary=True)
+               get_server.execute("SELECT * FROM servers WHERE server_id = %s", (queue_parameters['server_id'],))
+               get_server_result = get_server.fetchall()
+               if get_server.rowcount > 0:
+                   for server in get_server_result:
+                       CONTAINER_ID = server['container_id']
+                       if server['enable_ftp'] == 1:
+                           IS_FTP_ENABLED = True
+                           FTP_USERNAME = server['ftp_username']
+               # Kill the container if running
+               try:
+                   subprocess.check_output(['screen', '-S', CONTAINER_ID, '-X', 'quit'])
+               except Exception as e:
+                   pass
+               # Force delete the container with its daemon-data directory
+               try:
+                   subprocess.check_output(['userdel', '-Z', '-r', '-f', CONTAINER_ID])
+               except Exception as e:
+                   pass
+               # Delete the cgroups kernel configurations and rules of the container
+               delete_cgroups = daemondb.cursor(dictionary=True)
+               delete_cgroups.execute("DELETE FROM cgroups_files WHERE line LIKE %%%s%%", (CONTAINER_ID,))
+               daemondb.commit()
+               # Make sure the daemon-data directory of the container was deleted
+               try:
+                   subprocess.check_output(['rm', '-rf', "/home/fabitmanage/daemon-data/" + CONTAINER_ID])
+               except Exception as e:
+                   pass
+               # Remove the container's FTP if enabled
+               if IS_FTP_ENABLED == True:
+                   global ftp_authorizer
+                   ftp_authorizer.remove_user(FTP_USERNAME)
+               # Remove the server from the daemon DB
+               delete_server = daemondb.cursor(dictionary=True)
+               delete_server.execute("DELETE FROM servers WHERE server_id = %s", (queue_parameters['server_id'],))
+               daemondb.commit()
+               Logger("info", "Deleted server with container ID " + CONTAINER_ID)
                
            delete_queue = daemondb.cursor(dictionary=True)
            delete_queue.execute("DELETE FROM queue WHERE id = %s", (result['id'],))
@@ -428,8 +468,22 @@ def daemon_FTP():
             ftp_authorizer.add_user(server['ftp_username'], server['ftp_password'], "/home/fabitmanage/daemon-data/" + server['container_id'], perm="elradfmwMT")
     daemondb.close()
     ftpserv.serve_forever()
+    
+def exit_handler():
+    print("Exiting FabitManage daemon...")
+    if 'ubuntu' in platform.platform().lower() or 'debian' in platform.platform().lower():
+        try:
+            subprocess.check_output(['killall', 'cgrulesengd'])
+        except Exception as e:
+            pass
+    try:
+        subprocess.check_output(['killall', 'screen'])
+    except Exception as e:
+        pass
+    sys.exit()
 
 if __name__ == '__main__':
+    atexit.register(exit_handler)
     print("FabitManage Daemon " + daemon_version)
     print("Starting threads & components...")
     # Test the connection to the daemon DB
