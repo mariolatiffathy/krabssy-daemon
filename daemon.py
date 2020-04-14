@@ -241,6 +241,8 @@ def server_power(server_id):
     if check_serverid_exists.rowcount == 0:
         return jsonify({"error": {"http_code": 404, "description": "This server doesn't exists."}}), 404
     SERVER_CONTAINER_ID = ""
+    SERVER_CONTAINER_UID = 0
+    SERVER_CONTAINER_GID = 0
     SERVER_STARTUP_COMMAND = ""
     get_server = daemondb.cursor(dictionary=True)
     get_server.execute("SELECT * FROM servers WHERE server_id = %s", (server_id,))
@@ -248,36 +250,38 @@ def server_power(server_id):
     if get_server.rowcount > 0:
         for server in get_server_result:
             SERVER_CONTAINER_ID = server['container_id']
+            SERVER_CONTAINER_UID = int(server['container_uid'])
+            SERVER_CONTAINER_GID = int(server['container_gid'])
             SERVER_STARTUP_COMMAND = server['startup_command']
     SCREEN_SESSION_EXISTS = False
     try:
-        subprocess.check_output(("screen -S " + SERVER_CONTAINER_ID + " -X select . ; echo $?").split(" "))
+        subprocess.check_output(("screen -S " + SERVER_CONTAINER_ID + " -X select . ; echo $?").split(" "), preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
         SCREEN_SESSION_EXISTS = True
     except subprocess.CalledProcessError as e:
         SCREEN_SESSION_EXISTS = False
     if req_data['action'] == "start":
         if SCREEN_SESSION_EXISTS == False:
             # No screen session for the container is running... Start it now
-            subprocess.check_output(['screen', '-d', '-m', '-S', SERVER_CONTAINER_ID])
-            subprocess.check_output(("screen -S " + SERVER_CONTAINER_ID + " -X stuff '" + SERVER_STARTUP_COMMAND + "'$(echo -ne '\015')").split(" "))
+            subprocess.check_output(['screen', '-d', '-m', '-S', SERVER_CONTAINER_ID], preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            subprocess.check_output(("screen -S " + SERVER_CONTAINER_ID + " -X stuff '" + SERVER_STARTUP_COMMAND + "'$(echo -ne '\015')").split(" "), preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             return jsonify({"success": {"http_code": 200, "description": "Server successfully started."}}), 200
         else:
             return jsonify({"error": {"http_code": 422, "description": "The server is already running."}}), 422
     if req_data['action'] == "stop":
         if SCREEN_SESSION_EXISTS == True:
             # A screen session for the container is running... Kill it now
-            subprocess.check_output(['screen', '-S', SERVER_CONTAINER_ID, '-X', 'quit'])
+            subprocess.check_output(['screen', '-S', SERVER_CONTAINER_ID, '-X', 'quit'], preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             return jsonify({"success": {"http_code": 200, "description": "Server successfully stopped."}}), 200
         else:
             return jsonify({"error": {"http_code": 422, "description": "The server is already stopped."}}), 422
     if req_data['action'] == "restart":
         try:
-            subprocess.check_output(['screen', '-S', SERVER_CONTAINER_ID, '-X', 'quit'])
+            subprocess.check_output(['screen', '-S', SERVER_CONTAINER_ID, '-X', 'quit'], preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
         except Exception as e:
             pass
         try:
-            subprocess.check_output(['screen', '-d', '-m', '-S', SERVER_CONTAINER_ID])
-            subprocess.check_output(("screen -S " + SERVER_CONTAINER_ID + " -X stuff '" + SERVER_STARTUP_COMMAND + "'$(echo -ne '\015')").split(" "))
+            subprocess.check_output(['screen', '-d', '-m', '-S', SERVER_CONTAINER_ID], preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            subprocess.check_output(("screen -S " + SERVER_CONTAINER_ID + " -X stuff '" + SERVER_STARTUP_COMMAND + "'$(echo -ne '\015')").split(" "), preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
         except Exception as e:
             pass
         return jsonify({"success": {"http_code": 200, "description": "Server successfully restarted."}}), 200
@@ -389,6 +393,8 @@ def QueueManager():
                    
            if queue_action == "delete_server":
                CONTAINER_ID = ""
+               CONTAINER_GID = 0
+               CONTAINER_UID = 0
                IS_FTP_ENABLED = False
                FTP_USERNAME = ""
                get_server = daemondb.cursor(dictionary=True)
@@ -397,12 +403,14 @@ def QueueManager():
                if get_server.rowcount > 0:
                    for server in get_server_result:
                        CONTAINER_ID = server['container_id']
+                       CONTAINER_UID = int(server['container_uid'])
+                       CONTAINER_GID = int(server['container_gid'])
                        if server['enable_ftp'] == 1:
                            IS_FTP_ENABLED = True
                            FTP_USERNAME = server['ftp_username']
                # Kill the container if running
                try:
-                   subprocess.check_output(['screen', '-S', CONTAINER_ID, '-X', 'quit'])
+                   subprocess.check_output(['screen', '-S', CONTAINER_ID, '-X', 'quit'], preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)))
                except Exception as e:
                    pass
                # Remove all the restrictions of the container daemon-data directory
