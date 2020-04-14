@@ -260,7 +260,7 @@ def server_power(server_id):
             SERVER_STARTUP_COMMAND = server['startup_command']
     TMUX_SESSION_EXISTS = False
     try:
-        subprocess.check_output(("tmux has-session -t " + SERVER_CONTAINER_ID + " 2>/dev/null").split(" "), cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+        subprocess.check_output(("tmux has-session -t " + SERVER_CONTAINER_ID).split(" "), cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
         TMUX_SESSION_EXISTS = True
     except subprocess.CalledProcessError as e:
         TMUX_SESSION_EXISTS = False
