@@ -249,8 +249,14 @@ def server_power(server_id):
         for server in get_server_result:
             SERVER_CONTAINER_ID = server['container_id']
             SERVER_STARTUP_COMMAND = server['startup_command']
+    SCREEN_SESSION_EXISTS = False
+    try:
+        subprocess.check_output(("screen -S " + SERVER_CONTAINER_ID + " -X select . ; echo $?").split(" "))
+        SCREEN_SESSION_EXISTS = True
+    except subprocess.CalledProcessError as e:
+        SCREEN_SESSION_EXISTS = False
     if req_data['action'] == "start":
-        if "1" in subprocess.check_output(("screen -S " + SERVER_CONTAINER_ID + " -X select . ; echo $?").split(" ")).decode():
+        if SCREEN_SESSION_EXISTS == False:
             # No screen session for the container is running... Start it now
             subprocess.check_output(['screen', '-d', '-m', '-S', SERVER_CONTAINER_ID])
             subprocess.check_output(("screen -S " + SERVER_CONTAINER_ID + " -X stuff '" + SERVER_STARTUP_COMMAND + "'$(echo -ne '\015')").split(" "))
@@ -258,7 +264,7 @@ def server_power(server_id):
         else:
             return jsonify({"error": {"http_code": 422, "description": "The server is already running."}}), 422
     if req_data['action'] == "stop":
-        if "0" in subprocess.check_output(("screen -S " + SERVER_CONTAINER_ID + " -X select . ; echo $?").split(" ")).decode():
+        if SCREEN_SESSION_EXISTS == True:
             # A screen session for the container is running... Kill it now
             subprocess.check_output(['screen', '-S', SERVER_CONTAINER_ID, '-X', 'quit'])
             return jsonify({"success": {"http_code": 200, "description": "Server successfully stopped."}}), 200
