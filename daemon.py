@@ -275,13 +275,13 @@ def server_power(server_id):
     if req_data['action'] == "stop":
         if TMUX_SESSION_EXISTS == True:
             # A tmux session for the container is running... Kill it now
-            subprocess.check_output(['tmux', 'kill-session', '-t' SERVER_CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            subprocess.check_output(['tmux', 'kill-session', '-t', SERVER_CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             return jsonify({"success": {"http_code": 200, "description": "Server successfully stopped."}}), 200
         else:
             return jsonify({"error": {"http_code": 422, "description": "The server is already stopped."}}), 422
     if req_data['action'] == "restart":
         try:
-            subprocess.check_output(['tmux', 'kill-session', '-t' SERVER_CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            subprocess.check_output(['tmux', 'kill-session', '-t', SERVER_CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
         except Exception as e:
             pass
         try:
@@ -409,7 +409,7 @@ def QueueManager():
                            FTP_USERNAME = server['ftp_username']
                # Kill the container if running
                try:
-                   subprocess.check_output(['tmux', 'kill-session', '-t' CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + CONTAINER_ID, preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)))
+                   subprocess.check_output(['tmux', 'kill-session', '-t', CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + CONTAINER_ID, preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)))
                except Exception as e:
                    pass
                # Remove all the restrictions of the container daemon-data directory
