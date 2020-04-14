@@ -45,6 +45,11 @@ def get_size(start_path = '.'):
             if not os.path.islink(fp): 
                 total_size += os.path.getsize(fp) 
     return total_size
+def AsUser(uid, gid):
+    def set_ids():
+        os.setgid(gid)
+        os.setuid(uid)
+    return set_ids
 
 # Load daemon configuration file
 daemon_config = configparser.ConfigParser()
@@ -253,35 +258,35 @@ def server_power(server_id):
             SERVER_CONTAINER_UID = int(server['container_uid'])
             SERVER_CONTAINER_GID = int(server['container_gid'])
             SERVER_STARTUP_COMMAND = server['startup_command']
-    SCREEN_SESSION_EXISTS = False
+    TMUX_SESSION_EXISTS = False
     try:
-        subprocess.check_output(("screen -S " + SERVER_CONTAINER_ID + " -X select . ; echo $?").split(" "), cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
-        SCREEN_SESSION_EXISTS = True
+        subprocess.check_output(("tmux has-session -t " + SERVER_CONTAINER_ID + " 2>/dev/null").split(" "), cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+        TMUX_SESSION_EXISTS = True
     except subprocess.CalledProcessError as e:
-        SCREEN_SESSION_EXISTS = False
+        TMUX_SESSION_EXISTS = False
     if req_data['action'] == "start":
-        if SCREEN_SESSION_EXISTS == False:
-            # No screen session for the container is running... Start it now
-            subprocess.check_output(['screen', '-d', '-m', '-S', SERVER_CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
-            subprocess.check_output(('screen -S ' + SERVER_CONTAINER_ID + ' -p 0 -X stuff "' + SERVER_STARTUP_COMMAND + '^M"').split(' '), cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+        if TMUX_SESSION_EXISTS == False:
+            # No tmux session for the container is running... Start it now
+            subprocess.check_output(['tmux', 'new', '-d', '-s', SERVER_CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            subprocess.check_output(('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER').split(' '), cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             return jsonify({"success": {"http_code": 200, "description": "Server successfully started."}}), 200
         else:
             return jsonify({"error": {"http_code": 422, "description": "The server is already running."}}), 422
     if req_data['action'] == "stop":
-        if SCREEN_SESSION_EXISTS == True:
-            # A screen session for the container is running... Kill it now
-            subprocess.check_output(['screen', '-S', SERVER_CONTAINER_ID, '-X', 'quit'], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+        if TMUX_SESSION_EXISTS == True:
+            # A tmux session for the container is running... Kill it now
+            subprocess.check_output(['tmux', 'kill-session', '-t' SERVER_CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             return jsonify({"success": {"http_code": 200, "description": "Server successfully stopped."}}), 200
         else:
             return jsonify({"error": {"http_code": 422, "description": "The server is already stopped."}}), 422
     if req_data['action'] == "restart":
         try:
-            subprocess.check_output(['screen', '-S', SERVER_CONTAINER_ID, '-X', 'quit'], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            subprocess.check_output(['tmux', 'kill-session', '-t' SERVER_CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
         except Exception as e:
             pass
         try:
-            subprocess.check_output(['screen', '-d', '-m', '-S', SERVER_CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
-            subprocess.check_output(('screen -S ' + SERVER_CONTAINER_ID + ' -p 0 -X stuff "' + SERVER_STARTUP_COMMAND + '^M"').split(' '), cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            subprocess.check_output(['tmux', 'new', '-d', '-s', SERVER_CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            subprocess.check_output(('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER').split(' '), cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
         except Exception as e:
             pass
         return jsonify({"success": {"http_code": 200, "description": "Server successfully restarted."}}), 200
@@ -302,12 +307,6 @@ app.register_error_handler(405, daemon_err_405)
 def daemon_err_500(e):
     return jsonify({"error": {"http_code": 500}}), 500
 app.register_error_handler(500, daemon_err_500)
-    
-def AsUser(uid, gid):
-    def set_ids():
-        os.setgid(gid)
-        os.setuid(uid)
-    return set_ids
     
 def QueueManager():
     while True:
@@ -410,7 +409,7 @@ def QueueManager():
                            FTP_USERNAME = server['ftp_username']
                # Kill the container if running
                try:
-                   subprocess.check_output(['screen', '-S', CONTAINER_ID, '-X', 'quit'], cwd="/home/fabitmanage/daemon-data/" + CONTAINER_ID, preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)))
+                   subprocess.check_output(['tmux', 'kill-session', '-t' CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + CONTAINER_ID, preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)))
                except Exception as e:
                    pass
                # Remove all the restrictions of the container daemon-data directory
@@ -556,7 +555,7 @@ def exit_handler():
         except Exception as e:
             pass
     try:
-        subprocess.check_output(['killall', 'screen'])
+        subprocess.check_output(['tmux', 'kill-server'])
     except Exception as e:
         pass
     sys.exit()
