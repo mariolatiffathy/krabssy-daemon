@@ -269,7 +269,7 @@ def server_power(server_id):
             # No tmux session for the container is running... Start it now
             subprocess.check_output(['tmux', 'new-session', '-d', '-s', SERVER_CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             subprocess.check_output(['tmux', 'ls'], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
-            subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, shell=True, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            # subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, shell=True, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             return jsonify({"success": {"http_code": 200, "description": "Server successfully started."}}), 200
         else:
             return jsonify({"error": {"http_code": 422, "description": "The server is already running."}}), 422
