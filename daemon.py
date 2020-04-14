@@ -267,7 +267,7 @@ def server_power(server_id):
     if req_data['action'] == "start":
         if TMUX_SESSION_EXISTS == False:
             # No tmux session for the container is running... Start it now
-            subprocess.check_output("su - " + SERVER_CONTAINER_ID + " -c 'tmux new -d -s " + SERVER_CONTAINER_ID + "'", shell=True)
+            subprocess.check_output("su - " + SERVER_CONTAINER_ID + " -c 'tmux new -d -s " + SERVER_CONTAINER_ID + "'", shell=True) # Starting a tmux session using AsUser() will result in a corrupted tmux session, that's why we use 'su' to execute the command as the container's user.
             subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', shell=True, cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             return jsonify({"success": {"http_code": 200, "description": "Server successfully started."}}), 200
         else:
@@ -285,11 +285,52 @@ def server_power(server_id):
         except Exception as e:
             pass
         try:
-            subprocess.check_output("su - " + SERVER_CONTAINER_ID + " -c 'tmux new -d -s " + SERVER_CONTAINER_ID + "'", shell=True)
+            subprocess.check_output("su - " + SERVER_CONTAINER_ID + " -c 'tmux new -d -s " + SERVER_CONTAINER_ID + "'", shell=True) # Starting a tmux session using AsUser() will result in a corrupted tmux session, that's why we use 'su' to execute the command as the container's user.
             subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', shell=True, cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
         except Exception as e:
             pass
         return jsonify({"success": {"http_code": 200, "description": "Server successfully restarted."}}), 200
+    daemondb.close()
+    
+@app.route('/api/v1/servers/<server_id>/console', methods=['POST', 'GET'])
+def server_console(server_id):
+    if request.headers.get('Authorization') is not None:
+        if IS_AUTHENTICATED(request.headers.get('Authorization')) == False:
+            return jsonify(RES_UNAUTHENTICATED), 403
+    else:
+        return jsonify(RES_UNAUTHENTICATED), 403
+    if not server_id or server_id == "":
+        return jsonify({"error": {"http_code": 422, "description": "You are missing a required field."}}), 422
+    daemondb = mysql.connector.connect(**db_settings)
+    check_serverid_exists = daemondb.cursor(dictionary=True)
+    check_serverid_exists.execute("SELECT * FROM servers WHERE server_id = %s", (server_id,))
+    check_serverid_exists.fetchall()
+    if check_serverid_exists.rowcount == 0:
+        return jsonify({"error": {"http_code": 404, "description": "This server doesn't exists."}}), 404
+    SERVER_CONTAINER_ID = ""
+    SERVER_CONTAINER_UID = 0
+    SERVER_CONTAINER_GID = 0
+    get_server = daemondb.cursor(dictionary=True)
+    get_server.execute("SELECT * FROM servers WHERE server_id = %s", (server_id,))
+    get_server_result = get_server.fetchall()
+    if get_server.rowcount > 0:
+        for server in get_server_result:
+            SERVER_CONTAINER_ID = server['container_id']
+            SERVER_CONTAINER_UID = int(server['container_uid'])
+            SERVER_CONTAINER_GID = int(server['container_gid'])
+    TMUX_SESSION_EXISTS = False
+    try:
+        subprocess.check_output(("tmux has-session -t " + SERVER_CONTAINER_ID).split(" "), cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+        TMUX_SESSION_EXISTS = True
+    except subprocess.CalledProcessError as e:
+        TMUX_SESSION_EXISTS = False
+    if TMUX_SESSION_EXISTS == False:
+        return jsonify({"error": {"http_code": 422, "description": "This server isn't online."}}), 422
+    if request.method == 'GET':
+        if not request.args.get("lines_limit") or request.args.get("lines_limit") == "" or request.args.get("lines_limit").isdigit() == False:
+            return jsonify({"error": {"http_code": 422, "description": "You are missing a required field."}}), 422
+        console_output = subprocess.check_output('tmux capture-pane -pt ' + SERVER_CONTAINER_ID + ' -S -' + str(request.args.get("lines_limit")), shell=True, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID))).decode()
+        return jsonify({"success": {"http_code": 200, "description": ""}, "console": {"lines_limit": int(request.args.get("lines_limit")), "output": console_output.replace("\n", "\\n")}}), 200
     daemondb.close()
     
 # Flask Custom Errors
@@ -489,7 +530,7 @@ def PortBindingPermissions():
                                 if not str(port) in server['allowed_ports']:
                                     try:
                                         subprocess.check_output(["kill", "-9", str(pid)])
-                                        Logger("info", "Terminated container " + pid_owner + ":" + str(pid) + " for listening on an disallowed port " + str(port))
+                                        Logger("info", "Terminated container " + pid_owner + ":" + str(pid) + " for listening on a disallowed port " + str(port))
                                     except Exception as e:
                                         pass
                         daemondb.close()
