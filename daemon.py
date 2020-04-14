@@ -268,7 +268,10 @@ def server_power(server_id):
         if TMUX_SESSION_EXISTS == False:
             # No tmux session for the container is running... Start it now
             subprocess.check_output("su - " + SERVER_CONTAINER_ID + " -c 'tmux new -d -s " + SERVER_CONTAINER_ID + "'", shell=True) # Starting a tmux session using AsUser() will result in a corrupted tmux session, that's why we use 'su' to execute the command as the container's user.
-            subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', shell=True, cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            try:
+                subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', shell=True, cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            except Exception as e:
+                pass
             return jsonify({"success": {"http_code": 200, "description": "Server successfully started."}}), 200
         else:
             return jsonify({"error": {"http_code": 422, "description": "The server is already running."}}), 422
@@ -286,7 +289,10 @@ def server_power(server_id):
             pass
         try:
             subprocess.check_output("su - " + SERVER_CONTAINER_ID + " -c 'tmux new -d -s " + SERVER_CONTAINER_ID + "'", shell=True) # Starting a tmux session using AsUser() will result in a corrupted tmux session, that's why we use 'su' to execute the command as the container's user.
-            subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', shell=True, cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            try:
+                subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', shell=True, cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            except Exception as e:
+                pass
         except Exception as e:
             pass
         return jsonify({"success": {"http_code": 200, "description": "Server successfully restarted."}}), 200
@@ -330,10 +336,24 @@ def server_console(server_id):
         if not request.args.get("lines_limit") or request.args.get("lines_limit") == "" or request.args.get("lines_limit").isdigit() == False:
             return jsonify({"error": {"http_code": 422, "description": "You are missing a required field."}}), 422
         console_output = subprocess.check_output('tmux capture-pane -pt ' + SERVER_CONTAINER_ID + ' -S -' + str(request.args.get("lines_limit")), shell=True, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID))).decode()
-        return jsonify({"success": {"http_code": 200, "description": ""}, "console": {"lines_limit": int(request.args.get("lines_limit")), "output": console_output.replace("\n", "\\n")}}), 200
+        return jsonify({"success": {"http_code": 200, "description": ""}, "console": {"lines_limit": int(request.args.get("lines_limit")), "output": console_output}}), 200
+    if request.method == 'POST':
+        req_data = request.get_json()
+        if not "command" in req_data or req_data['command'] == "":
+            return jsonify({"error": {"http_code": 422, "description": "You are missing a required field."}}), 422
+        try:
+            subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + req_data['command'] + '" ENTER', shell=True, cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            return jsonify({"success": {"http_code": 200, "description": "Command executed successfully."}}), 200
+        except Exception as e:
+            return jsonify({"error": {"http_code": 500, "description": "An error had occured while executing the command."}}), 500
     daemondb.close()
     
 # Flask Custom Errors
+@app.errorhandler(400)
+def daemon_err_400(e):
+    return jsonify({"error": {"http_code": 400}}), 400
+app.register_error_handler(400, daemon_err_400)
+
 @app.errorhandler(404)
 def daemon_err_404(e):
     return jsonify({"error": {"http_code": 404}}), 404
