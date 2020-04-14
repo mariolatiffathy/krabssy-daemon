@@ -621,7 +621,7 @@ def exit_handler():
     except Exception as e:
         pass
     try:
-        subprocess.check_output(['killall', 'tmux'])
+        subprocess.check_output(['pkill', '-f', 'tmux'])
     except Exception as e:
         pass
     sys.exit()
