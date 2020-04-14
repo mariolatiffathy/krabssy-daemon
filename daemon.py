@@ -183,6 +183,8 @@ def server(server_id):
     if request.method == 'GET':
         IS_SERVER_ONLINE = False
         SERVER_CONTAINER_ID = ""
+        SERVER_CONTAINER_UID = 0
+        SERVER_CONTAINER_GID = 0
         SERVER_FABITIMAGE_ID = 0
         SERVER_ALLOWED_PORTS = ""
         SERVER_STARTUP_COMMAND = ""
@@ -201,6 +203,8 @@ def server(server_id):
         if get_server.rowcount > 0:
             for server in get_server_result:
                 SERVER_CONTAINER_ID = server['container_id']
+                SERVER_CONTAINER_UID = int(server['container_uid'])
+                SERVER_CONTAINER_GID = int(server['container_gid'])
                 SERVER_FABITIMAGE_ID = server['fabitimage_id']
                 SERVER_STARTUP_COMMAND = server['startup_command']
                 SERVER_TOTAL_MEMORY = server['ram']
@@ -214,9 +218,13 @@ def server(server_id):
                     SERVER_ALLOWED_PORTS = server['allowed_ports'].split(',')
                 else:
                     SERVER_ALLOWED_PORTS = server['allowed_ports']
+        try:
+            subprocess.check_output(("tmux has-session -t " + SERVER_CONTAINER_ID).split(" "), cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            IS_SERVER_ONLINE = True
+        except subprocess.CalledProcessError as e:
+            IS_SERVER_ONLINE = False
         for proc in process_iter():
             if proc.username() == SERVER_CONTAINER_ID and proc.name() != "sh" and proc.name() != "bash":
-                IS_SERVER_ONLINE = True
                 MEM_INFO = proc.memory_info()
                 USED_PHYSICAL = MEM_INFO.rss / 1000000
                 SERVER_USED_MEMORY = SERVER_USED_MEMORY + USED_PHYSICAL
@@ -547,7 +555,7 @@ def PortBindingPermissions():
                         get_server_result = get_server.fetchall()
                         if get_server.rowcount > 0:
                             for server in get_server_result:
-                                if not str(port) in server['allowed_ports']:
+                                if not str(port) in server['allowed_ports'].split(","):
                                     try:
                                         subprocess.check_output(["kill", "-9", str(pid)])
                                         Logger("info", "Terminated container " + pid_owner + ":" + str(pid) + " for listening on a disallowed port " + str(port))
