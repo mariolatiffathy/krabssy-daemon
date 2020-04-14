@@ -9,7 +9,7 @@ clear
 echo "Updating system and installing required packages..."
 if [  -n "$(uname -a | grep Ubuntu)" ]; then
     apt-get -y update
-    apt-get -y install git-core quota cgroup-tools libcgroup-dev tmux
+    apt-get -y install git-core quota cgroup-tools libcgroup-dev tmux python3.6
 else
     yum -y install https://centos7.iuscommunity.org/ius-release.rpm
     yum -y update
@@ -24,8 +24,15 @@ mkdir -p /fabitmanage-daemon/config && cp ./fabitmanage-installer-tmp/config/dae
 mkdir -p /fabitmanage-daemon/data/images && cp ./fabitmanage-installer-tmp/data/images/Minecraft.fabitimage /fabitmanage-daemon/data/images
 
 clear
+echo "Installing fabitmanaged service..."
+cp /usr/bin/python3.6 /usr/bin/fabitmanagedpy
+cp /usr/bin/python3 /usr/bin/fabitmanagedpy
+cp ./fabitmanage-installer-tmp/fabitmanaged.service /lib/systemd/system
+systemctl daemon-reload
+
+clear
 echo "Installing required Python modules..."
-pip3.6 install -r ./fabitmanage-installer-tmp/requirements.txt
+fabitmanagedpy -m pip install -r ./fabitmanage-installer-tmp/requirements.txt
 
 clear
 echo "Removing temporary files..."
