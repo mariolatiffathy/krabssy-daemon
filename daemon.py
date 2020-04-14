@@ -277,7 +277,9 @@ def server_power(server_id):
             # No tmux session for the container is running... Start it now
             subprocess.check_output("su - " + SERVER_CONTAINER_ID + " -c 'tmux new -d -s " + SERVER_CONTAINER_ID + "'", shell=True) # Starting a tmux session using AsUser() will result in a corrupted tmux session, that's why we use 'su' to execute the command as the container's user.
             try:
-                subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', shell=True, cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+                if not "tmux" in SERVER_STARTUP_COMMAND:
+                    # We check if the server startup command contains "tmux" or no for security reasons.
+                    subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', shell=True, cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             except Exception as e:
                 pass
             return jsonify({"success": {"http_code": 200, "description": "Server successfully started."}}), 200
@@ -298,7 +300,9 @@ def server_power(server_id):
         try:
             subprocess.check_output("su - " + SERVER_CONTAINER_ID + " -c 'tmux new -d -s " + SERVER_CONTAINER_ID + "'", shell=True) # Starting a tmux session using AsUser() will result in a corrupted tmux session, that's why we use 'su' to execute the command as the container's user.
             try:
-                subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', shell=True, cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+                if not "tmux" in SERVER_STARTUP_COMMAND:
+                    # We check if the server startup command contains "tmux" or no for security reasons.
+                    subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', shell=True, cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             except Exception as e:
                 pass
         except Exception as e:
@@ -349,6 +353,9 @@ def server_console(server_id):
         req_data = request.get_json()
         if not "command" in req_data or req_data['command'] == "":
             return jsonify({"error": {"http_code": 422, "description": "You are missing a required field."}}), 422
+        if "tmux" in req_data['command']:
+            # The user may be trying to bypass the daemon restrictions by dettaching the tmux session for example.
+            return jsonify({"error": {"http_code": 500, "description": "An error had occured while executing the command."}}), 500
         try:
             subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + req_data['command'] + '" ENTER', shell=True, cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             return jsonify({"success": {"http_code": 200, "description": "Command executed successfully."}}), 200

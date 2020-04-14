@@ -78,6 +78,8 @@
 
 **description**: Retrives server information.
 
+**notes**: The returned `is_online` is the status of the container, not the status of the processes of the container.
+
 ## /api/v1/servers/<server_id>
 **method**: DELETE
 
