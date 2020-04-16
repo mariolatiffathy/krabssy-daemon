@@ -24,7 +24,13 @@ quotaon /home/
 
 4. **If you are on Debian/Ubuntu:** Edit `/etc/default/grub` and the add `cgroup_enable=memory swapaccount=1` parameters to `GRUB_CMDLINE_LINUX_DEFAULT`. After that, type `update-grub` then reboot the system.
 
-5. to complete... (create db, import sql, edit daemon configuration file, and start the fabitmanaged service)
+5. Create a MySQL/MariaDB database and import the SQL file you can find in `/sql/daemondb.sql` of this repository.
+
+6. Edit `/fabitmanage-daemon/config/daemon.ini` to suit your needs, and make sure to put the daemon database credentials too.
+
+7. Start the daemon service by typing `service fabitmanaged start`
+
+8. Create a new daemon key in the `daemon_keys` table of the daemon database. The daemon key is needed for the FabitManage Panel.
 
 # Notes
 - All the tests were done on Debian 10
