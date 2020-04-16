@@ -412,7 +412,7 @@ def images(image_id):
         for image in result:
             image_path = image['path']
     if request.method == 'GET':
-        return jsonify({"success": {"http_code": 200, "description": ""}, "image": {"id": image_id, "path": image_path}), 200
+        return jsonify({"success": {"http_code": 200, "description": ""}, "image": {"id": image_id, "path": image_path}}), 200
     if request.method == 'DELETE':
         os.remove(image_path)
         delete_image = daemondb.cursor(dictionary=True)
