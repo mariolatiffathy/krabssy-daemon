@@ -123,3 +123,22 @@
       Required: yes
       
       Type: integer
+      
+## /api/v1/images
+**method**: POST (in JSON)
+
+**description**: Creates (uploads) a FabitImage
+
+**parameters**:
+
+  - The parameters is the FabitImage JSON directly. See the FabitImages documentaion for more information about the FabitImages JSON.
+  
+## /api/v1/images/<image_id>
+**method**: GET
+
+**description**: Retrives the FabitImage information.
+
+## /api/v1/images/<image_id>
+**method**: DELETE
+
+**description**: Deletes a FabitImage.

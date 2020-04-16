@@ -363,6 +363,64 @@ def server_console(server_id):
             return jsonify({"error": {"http_code": 500, "description": "An error had occured while executing the command."}}), 500
     daemondb.close()
     
+@app.route('/api/v1/images', methods=['POST'])
+def images_post():
+    if request.headers.get('Authorization') is not None:
+        if IS_AUTHENTICATED(request.headers.get('Authorization')) == False:
+            return jsonify(RES_UNAUTHENTICATED), 403
+    else:
+        return jsonify(RES_UNAUTHENTICATED), 403
+    daemondb = mysql.connector.connect(**db_settings)
+    req_data = request.get_json()
+    INVALID_IMAGE_RES = {"error": {"http_code": 422, "description": "Invalid image JSON."}}
+    if not "name" in req_data:
+        return jsonify(INVALID_IMAGE_RES), 422
+    if not "author" in req_data:
+        return jsonify(INVALID_IMAGE_RES), 422
+    if not "version" in req_data:
+        return jsonify(INVALID_IMAGE_RES), 422
+    if not "events" in req_data:
+        return jsonify(INVALID_IMAGE_RES), 422
+    IMAGE_JSON_STRING = json.dumps(req_data)
+    IMAGE_FILE_PATH = "/fabitmanage-daemon/data/images/" + str(uuid.uuid4()).replace("-", "")[0:15] + ".fabitimage"
+    with open(IMAGE_FILE_PATH, 'w+') as image_file: 
+        image_file.write(IMAGE_JSON_STRING)
+    push_image = daemondb.cursor(dictionary=True)
+    push_image.execute("INSERT INTO images (path) VALUES (%s)", (IMAGE_FILE_PATH,))
+    image_id = int(push_image.lastrowid)
+    daemondb.commit()
+    return jsonify({"success": {"http_code": 200, "description": ""}, "image": {"id": image_id, "path": IMAGE_FILE_PATH}}), 200
+    daemondb.close()
+    
+@app.route('/api/v1/images/<image_id>', methods=['GET', 'DELETE'])
+def images(image_id):
+    if request.headers.get('Authorization') is not None:
+        if IS_AUTHENTICATED(request.headers.get('Authorization')) == False:
+            return jsonify(RES_UNAUTHENTICATED), 403
+    else:
+        return jsonify(RES_UNAUTHENTICATED), 403
+    if not image_id or image_id == "":
+        return jsonify({"error": {"http_code": 422, "description": "You are missing a required field."}}), 422
+    image_path = ""
+    daemondb = mysql.connector.connect(**db_settings)
+    check_fabitimage_exists = daemondb.cursor(dictionary=True)
+    check_fabitimage_exists.execute("SELECT * FROM images WHERE id = %s", (int(image_id),))
+    result = check_fabitimage_exists.fetchall()
+    if check_fabitimage_exists.rowcount == 0:
+        return jsonify({"error": {"http_code": 404, "description": "The inputted image doesn't exists."}}), 404
+    else:
+        for image in result:
+            image_path = image['path']
+    if request.method == 'GET':
+        return jsonify({"success": {"http_code": 200, "description": ""}, "image": {"id": image_id, "path": image_path}), 200
+    if request.method == 'DELETE':
+        os.remove(image_path)
+        delete_image = daemondb.cursor(dictionary=True)
+        delete_image.execute("DELETE FROM images WHERE id = %s", (int(image_id),))
+        daemondb.commit()
+        return jsonify({"success": {"http_code": 200, "description": "Image deleted successfully."}}), 200
+    daemondb.close()
+    
 # Flask Custom Errors
 @app.errorhandler(400)
 def daemon_err_400(e):
