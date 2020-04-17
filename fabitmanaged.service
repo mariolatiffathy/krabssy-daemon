@@ -1,11 +1,11 @@
 [Unit]
-Description=FabitManage Daemon
+Description=Krabssy Daemon
 After=multi-user.target
 Conflicts=getty@tty1.service
 
 [Service]
 Type=simple 
-ExecStart=/usr/bin/fabitmanagedpy /fabitmanage-daemon/daemon.py
+ExecStart=/usr/bin/krabssydpy /krabssy-daemon/daemon.py
 StandardInput=tty-force
 
 [Install]

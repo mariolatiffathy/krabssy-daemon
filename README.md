@@ -1,4 +1,4 @@
-# FabitManage Daemon
+# Krabssy Daemon
 The daemon handles all the messages sent from the panel, and it also sends messages to the panel.
 
 # Dependencies used
@@ -26,12 +26,12 @@ quotaon /home/
 
 5. Create a MySQL/MariaDB database and import the SQL file you can find in `/sql/daemondb.sql` of this repository.
 
-6. Edit `/fabitmanage-daemon/config/daemon.ini` to suit your needs, and make sure to put the daemon database credentials too.
+6. Edit `/krabssy-daemon/config/daemon.ini` to suit your needs, and make sure to put the daemon database credentials too.
 
-7. Start the daemon service by typing `service fabitmanaged start`
+7. Start the daemon service by typing `service krabssyd start`
 
-8. Create a new daemon key in the `daemon_keys` table of the daemon database. The daemon key is needed for the FabitManage Panel.
+8. Create a new daemon key in the `daemon_keys` table of the daemon database. The daemon key is needed for the Krabssy Panel.
 
 # Notes
 - All the tests were done on Debian 10
-- The FabitManage Daemon will override any cgroups configurations and rules on the system. So you can't use the FabitManage Daemon with another thing that uses cgroups on the same system.
+- The Krabssy Daemon will override any cgroups configurations and rules on the system. So you can't use the Krabssy Daemon with another thing that uses cgroups on the same system.

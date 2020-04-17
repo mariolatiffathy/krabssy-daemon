@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 '''
-FABITMANAGE DAEMON
-@mariolatiffathy/fabitmanage-daemon
+KRABSSY DAEMON
+@mariolatiffathy/krabssy-daemon
 '''
 import subprocess
 import threading
@@ -53,7 +53,7 @@ def AsUser(uid, gid):
 
 # Load daemon configuration file
 daemon_config = configparser.ConfigParser()
-daemon_config.read("/fabitmanage-daemon/config/daemon.ini")
+daemon_config.read("/krabssy-daemon/config/daemon.ini")
     
 # Variables
 daemon_version = "v0.1-alpha"
@@ -116,7 +116,7 @@ def create_server():
         return jsonify(RES_UNAUTHENTICATED), 403
     daemondb = mysql.connector.connect(**db_settings)
     req_data = request.get_json()
-    required_data = ["allowed_ports", "server_id", "enable_ftp", "ram", "cpu", "disk", "startup_command", "fabitimage_id"]
+    required_data = ["allowed_ports", "server_id", "enable_ftp", "ram", "cpu", "disk", "startup_command", "krabssyimage_id"]
     for required in required_data:
         if not required in req_data:
             return jsonify({"error": {"http_code": 422, "description": "You are missing a required field."}}), 422
@@ -143,11 +143,11 @@ def create_server():
     check_serverid_exists.fetchall()
     if check_serverid_exists.rowcount >= 1:
         return jsonify({"error": {"http_code": 422, "description": "Another server with this server_id already exists."}}), 422
-    check_fabitimage_exists = daemondb.cursor(dictionary=True)
-    check_fabitimage_exists.execute("SELECT * FROM images WHERE id = %s", (int(req_data['fabitimage_id']),))
-    check_fabitimage_exists.fetchall()
-    if check_fabitimage_exists.rowcount == 0:
-        return jsonify({"error": {"http_code": 404, "description": "The inputted fabitimage_id doesn't exists."}}), 404
+    check_krabssyimage_exists = daemondb.cursor(dictionary=True)
+    check_krabssyimage_exists.execute("SELECT * FROM images WHERE id = %s", (int(req_data['krabssyimage_id']),))
+    check_krabssyimage_exists.fetchall()
+    if check_krabssyimage_exists.rowcount == 0:
+        return jsonify({"error": {"http_code": 404, "description": "The inputted krabssyimage_id doesn't exists."}}), 404
     queue_parameters = json.dumps(req_data)
     queue_action = "create_server"
     queuepush = daemondb.cursor(dictionary=True)
@@ -185,7 +185,7 @@ def server(server_id):
         SERVER_CONTAINER_ID = ""
         SERVER_CONTAINER_UID = 0
         SERVER_CONTAINER_GID = 0
-        SERVER_FABITIMAGE_ID = 0
+        SERVER_KRABSSYIMAGE_ID = 0
         SERVER_ALLOWED_PORTS = ""
         SERVER_STARTUP_COMMAND = ""
         SERVER_FTP_ENABLED = False
@@ -205,7 +205,7 @@ def server(server_id):
                 SERVER_CONTAINER_ID = server['container_id']
                 SERVER_CONTAINER_UID = int(server['container_uid'])
                 SERVER_CONTAINER_GID = int(server['container_gid'])
-                SERVER_FABITIMAGE_ID = server['fabitimage_id']
+                SERVER_KRABSSYIMAGE_ID = server['krabssyimage_id']
                 SERVER_STARTUP_COMMAND = server['startup_command']
                 SERVER_TOTAL_MEMORY = server['ram']
                 SERVER_TOTAL_DISK = server['disk']
@@ -219,7 +219,7 @@ def server(server_id):
                 else:
                     SERVER_ALLOWED_PORTS = server['allowed_ports']
         try:
-            subprocess.check_output(("tmux has-session -t " + SERVER_CONTAINER_ID).split(" "), cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            subprocess.check_output(("tmux has-session -t " + SERVER_CONTAINER_ID).split(" "), cwd="/home/krabssy/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             IS_SERVER_ONLINE = True
         except subprocess.CalledProcessError as e:
             IS_SERVER_ONLINE = False
@@ -229,8 +229,8 @@ def server(server_id):
                 USED_PHYSICAL = MEM_INFO.rss / 1000000
                 SERVER_USED_MEMORY = SERVER_USED_MEMORY + USED_PHYSICAL
                 SERVER_USED_CPU = SERVER_USED_CPU + proc.cpu_percent()
-        SERVER_USED_DISK = get_size('/home/fabitmanage/daemon-data/' + SERVER_CONTAINER_ID) / 1000000
-        return jsonify({"success": {"http_code": 200, "description": ""}, "server": {"is_online": IS_SERVER_ONLINE, "container_id": SERVER_CONTAINER_ID, "fabitimage_id": SERVER_FABITIMAGE_ID, "allowed_ports": SERVER_ALLOWED_PORTS, "startup_command": SERVER_STARTUP_COMMAND, "ftp_enabled": SERVER_FTP_ENABLED, "ftp_username": SERVER_FTP_USERNAME, "ftp_password": SERVER_FTP_PASSWORD, "used_memory": SERVER_USED_MEMORY, "total_memory": SERVER_TOTAL_MEMORY, "used_disk": SERVER_USED_DISK, "total_disk": SERVER_TOTAL_DISK, "used_cpu": SERVER_USED_CPU, "total_cpu": SERVER_TOTAL_CPU}}), 200
+        SERVER_USED_DISK = get_size('/home/krabssy/daemon-data/' + SERVER_CONTAINER_ID) / 1000000
+        return jsonify({"success": {"http_code": 200, "description": ""}, "server": {"is_online": IS_SERVER_ONLINE, "container_id": SERVER_CONTAINER_ID, "krabssyimage_id": SERVER_KRABSSYIMAGE_ID, "allowed_ports": SERVER_ALLOWED_PORTS, "startup_command": SERVER_STARTUP_COMMAND, "ftp_enabled": SERVER_FTP_ENABLED, "ftp_username": SERVER_FTP_USERNAME, "ftp_password": SERVER_FTP_PASSWORD, "used_memory": SERVER_USED_MEMORY, "total_memory": SERVER_TOTAL_MEMORY, "used_disk": SERVER_USED_DISK, "total_disk": SERVER_TOTAL_DISK, "used_cpu": SERVER_USED_CPU, "total_cpu": SERVER_TOTAL_CPU}}), 200
     daemondb.close()
     
 @app.route('/api/v1/servers/<server_id>/power', methods=['POST'])
@@ -268,7 +268,7 @@ def server_power(server_id):
             SERVER_STARTUP_COMMAND = server['startup_command']
     TMUX_SESSION_EXISTS = False
     try:
-        subprocess.check_output(("tmux has-session -t " + SERVER_CONTAINER_ID).split(" "), cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+        subprocess.check_output(("tmux has-session -t " + SERVER_CONTAINER_ID).split(" "), cwd="/home/krabssy/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
         TMUX_SESSION_EXISTS = True
     except subprocess.CalledProcessError as e:
         TMUX_SESSION_EXISTS = False
@@ -279,7 +279,7 @@ def server_power(server_id):
             try:
                 if not "tmux" in SERVER_STARTUP_COMMAND:
                     # We check if the server startup command contains "tmux" or no for security reasons.
-                    subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', shell=True, cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+                    subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', shell=True, cwd="/home/krabssy/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             except Exception as e:
                 pass
             return jsonify({"success": {"http_code": 200, "description": "Server successfully started."}}), 200
@@ -288,13 +288,13 @@ def server_power(server_id):
     if req_data['action'] == "stop":
         if TMUX_SESSION_EXISTS == True:
             # A tmux session for the container is running... Kill it now
-            subprocess.check_output(['tmux', 'kill-session', '-t', SERVER_CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            subprocess.check_output(['tmux', 'kill-session', '-t', SERVER_CONTAINER_ID], cwd="/home/krabssy/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             return jsonify({"success": {"http_code": 200, "description": "Server successfully stopped."}}), 200
         else:
             return jsonify({"error": {"http_code": 422, "description": "The server is already stopped."}}), 422
     if req_data['action'] == "restart":
         try:
-            subprocess.check_output(['tmux', 'kill-session', '-t', SERVER_CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            subprocess.check_output(['tmux', 'kill-session', '-t', SERVER_CONTAINER_ID], cwd="/home/krabssy/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
         except Exception as e:
             pass
         try:
@@ -302,7 +302,7 @@ def server_power(server_id):
             try:
                 if not "tmux" in SERVER_STARTUP_COMMAND:
                     # We check if the server startup command contains "tmux" or no for security reasons.
-                    subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', shell=True, cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+                    subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + SERVER_STARTUP_COMMAND + '" ENTER', shell=True, cwd="/home/krabssy/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             except Exception as e:
                 pass
         except Exception as e:
@@ -338,7 +338,7 @@ def server_console(server_id):
             SERVER_CONTAINER_GID = int(server['container_gid'])
     TMUX_SESSION_EXISTS = False
     try:
-        subprocess.check_output(("tmux has-session -t " + SERVER_CONTAINER_ID).split(" "), cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+        subprocess.check_output(("tmux has-session -t " + SERVER_CONTAINER_ID).split(" "), cwd="/home/krabssy/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
         TMUX_SESSION_EXISTS = True
     except subprocess.CalledProcessError as e:
         TMUX_SESSION_EXISTS = False
@@ -357,7 +357,7 @@ def server_console(server_id):
             # The user may be trying to bypass the daemon restrictions by dettaching the tmux session for example.
             return jsonify({"error": {"http_code": 500, "description": "An error had occured while executing the command."}}), 500
         try:
-            subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + req_data['command'] + '" ENTER', shell=True, cwd="/home/fabitmanage/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+            subprocess.check_output('tmux send-keys -t ' + SERVER_CONTAINER_ID + '.0 "' + req_data['command'] + '" ENTER', shell=True, cwd="/home/krabssy/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             return jsonify({"success": {"http_code": 200, "description": "Command executed successfully."}}), 200
         except Exception as e:
             return jsonify({"error": {"http_code": 500, "description": "An error had occured while executing the command."}}), 500
@@ -382,7 +382,7 @@ def images_post():
     if not "events" in req_data:
         return jsonify(INVALID_IMAGE_RES), 422
     IMAGE_JSON_STRING = json.dumps(req_data)
-    IMAGE_FILE_PATH = "/fabitmanage-daemon/data/images/" + str(uuid.uuid4()).replace("-", "")[0:15] + ".fabitimage"
+    IMAGE_FILE_PATH = "/krabssy-daemon/data/images/" + str(uuid.uuid4()).replace("-", "")[0:15] + ".krabssyimage"
     with open(IMAGE_FILE_PATH, 'w+') as image_file: 
         image_file.write(IMAGE_JSON_STRING)
     push_image = daemondb.cursor(dictionary=True)
@@ -403,10 +403,10 @@ def images(image_id):
         return jsonify({"error": {"http_code": 422, "description": "You are missing a required field."}}), 422
     image_path = ""
     daemondb = mysql.connector.connect(**db_settings)
-    check_fabitimage_exists = daemondb.cursor(dictionary=True)
-    check_fabitimage_exists.execute("SELECT * FROM images WHERE id = %s", (int(image_id),))
-    result = check_fabitimage_exists.fetchall()
-    if check_fabitimage_exists.rowcount == 0:
+    check_krabssyimage_exists = daemondb.cursor(dictionary=True)
+    check_krabssyimage_exists.execute("SELECT * FROM images WHERE id = %s", (int(image_id),))
+    result = check_krabssyimage_exists.fetchall()
+    if check_krabssyimage_exists.rowcount == 0:
         return jsonify({"error": {"http_code": 404, "description": "The inputted image doesn't exists."}}), 404
     else:
         for image in result:
@@ -460,12 +460,12 @@ def QueueManager():
            
            if queue_action == "create_server":
                # Define container ID
-               CONTAINER_ID = "fabitmanage-" + str(uuid.uuid4()).replace("-", "")[0:15] # Note: Must meet the Linux username rules https://stackoverflow.com/a/6949914/8524395
+               CONTAINER_ID = "krabssy-" + str(uuid.uuid4()).replace("-", "")[0:15] # Note: Must meet the Linux username rules https://stackoverflow.com/a/6949914/8524395
                # Create the container
-               subprocess.check_output(['mkdir', '-p', '/home/fabitmanage/daemon-data/' + CONTAINER_ID])
-               subprocess.check_output(["useradd", "-m", "-d", "/home/fabitmanage/daemon-data/" + CONTAINER_ID, "-p", crypt.crypt(str(uuid.uuid4()) + str(uuid.uuid4())), CONTAINER_ID])
+               subprocess.check_output(['mkdir', '-p', '/home/krabssy/daemon-data/' + CONTAINER_ID])
+               subprocess.check_output(["useradd", "-m", "-d", "/home/krabssy/daemon-data/" + CONTAINER_ID, "-p", crypt.crypt(str(uuid.uuid4()) + str(uuid.uuid4())), CONTAINER_ID])
                # Give the user access to his container directory
-               subprocess.check_output(['chown', '-R', CONTAINER_ID + ":" + CONTAINER_ID, '/home/fabitmanage/daemon-data/' + CONTAINER_ID + '/'])
+               subprocess.check_output(['chown', '-R', CONTAINER_ID + ":" + CONTAINER_ID, '/home/krabssy/daemon-data/' + CONTAINER_ID + '/'])
                # Define the cgconfig kernel configuration
                CGCONFIG_KERNEL_CFG = "group " + CONTAINER_ID + " { cpu { cpu.shares = " + str(int(queue_parameters['cpu'])) + "; } memory { memory.limit_in_bytes = " + str(int(queue_parameters['ram'])) + "m; memory.memsw.limit_in_bytes = " + str(int(queue_parameters['ram'])) + "m; } }"
                # Get the filesystem of the partition /home
@@ -480,47 +480,47 @@ def QueueManager():
                push_cgrules = daemondb.cursor(dictionary=True)
                push_cgrules.execute("INSERT INTO cgroups_files (file, line) VALUES (%s, %s)", ("cgrules", CONTAINER_ID + " memory,cpu " + CONTAINER_ID,))
                daemondb.commit()
-               # Get the FabitImage
-               FABITIMAGE_PATH = ""
-               FABITIMAGE_JSON = ""
-               get_fabitimage = daemondb.cursor(dictionary=True)
-               get_fabitimage.execute("SELECT * FROM images WHERE id = %s", (int(queue_parameters['fabitimage_id']),))
-               get_fabitimage_result = get_fabitimage.fetchall()
-               if get_fabitimage.rowcount > 0:
-                   for image in get_fabitimage_result:
-                       FABITIMAGE_PATH = image['path']
-               with open(FABITIMAGE_PATH, "r") as FABITIMAGE_FILE:
-                   FABITIMAGE_JSON = FABITIMAGE_FILE.read()
-               FABITIMAGE_PARSED = json.loads(FABITIMAGE_JSON)
+               # Get the KrabssyImage
+               KRABSSYIMAGE_PATH = ""
+               KRABSSYIMAGE_JSON = ""
+               get_krabssyimage = daemondb.cursor(dictionary=True)
+               get_krabssyimage.execute("SELECT * FROM images WHERE id = %s", (int(queue_parameters['krabssyimage_id']),))
+               get_krabssyimage_result = get_krabssyimage.fetchall()
+               if get_krabssyimage.rowcount > 0:
+                   for image in get_krabssyimage_result:
+                       KRABSSYIMAGE_PATH = image['path']
+               with open(KRABSSYIMAGE_PATH, "r") as KRABSSYIMAGE_FILE:
+                   KRABSSYIMAGE_JSON = KRABSSYIMAGE_FILE.read()
+               KRABSSYIMAGE_PARSED = json.loads(KRABSSYIMAGE_JSON)
                # Get the container UID and GID
                CONTAINER_UID = subprocess.check_output(['id', '-u', CONTAINER_ID]).decode().rstrip()
                CONTAINER_GID = subprocess.check_output(['id', '-g', CONTAINER_ID]).decode().rstrip()
-               # FABITIMAGE/PROCESS_EVENT on_create
-               if "from_container" in FABITIMAGE_PARSED['events']['on_create']:
-                   for command in FABITIMAGE_PARSED['events']['on_create']['from_container']:
-                       cmd = FABITIMAGE_PARSED['events']['on_create']['from_container'][command]
+               # KRABSSYIMAGE/PROCESS_EVENT on_create
+               if "from_container" in KRABSSYIMAGE_PARSED['events']['on_create']:
+                   for command in KRABSSYIMAGE_PARSED['events']['on_create']['from_container']:
+                       cmd = KRABSSYIMAGE_PARSED['events']['on_create']['from_container'][command]
                        try:
-                           subprocess.check_output(cmd.split(" "), preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)), cwd="/home/fabitmanage/daemon-data/" + CONTAINER_ID)
+                           subprocess.check_output(cmd.split(" "), preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)), cwd="/home/krabssy/daemon-data/" + CONTAINER_ID)
                        except Exception as e:
                            Logger("warn", "Failed to execute command '" + cmd + "' from container on server creation.")
-               if "as_root" in FABITIMAGE_PARSED['events']['on_create']:
-                   for command in FABITIMAGE_PARSED['events']['on_create']['as_root']:
-                       cmd = FABITIMAGE_PARSED['events']['on_create']['as_root'][command]
+               if "as_root" in KRABSSYIMAGE_PARSED['events']['on_create']:
+                   for command in KRABSSYIMAGE_PARSED['events']['on_create']['as_root']:
+                       cmd = KRABSSYIMAGE_PARSED['events']['on_create']['as_root'][command]
                        try:
-                           subprocess.check_output(cmd.split(" "), cwd="/home/fabitmanage/daemon-data/" + CONTAINER_ID)
+                           subprocess.check_output(cmd.split(" "), cwd="/home/krabssy/daemon-data/" + CONTAINER_ID)
                        except Exception as e:
                            Logger("warn", "Failed to execute command '" + cmd + "' as root on server creation.")
                if queue_parameters['enable_ftp'] == True:
                    enable_ftp = 1
                    ftp_username = ''.join(random.choices(string.ascii_lowercase + string.digits, k=9))
                    ftp_password = ''.join(random.choices(string.ascii_lowercase + string.ascii_uppercase + string.digits, k=16))
-                   ftp_authorizer.add_user(ftp_username, ftp_password, "/home/fabitmanage/daemon-data/" + CONTAINER_ID, perm="elradfmwMT")
+                   ftp_authorizer.add_user(ftp_username, ftp_password, "/home/krabssy/daemon-data/" + CONTAINER_ID, perm="elradfmwMT")
                else:
                    enable_ftp = 0
                    ftp_username = ""
                    ftp_password = ""
                push_server = daemondb.cursor(dictionary=True)
-               push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, fabitimage_id, startup_command, enable_ftp, ftp_username, ftp_password, allowed_ports, disk, cpu, ram) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (str(queue_parameters['server_id']), str(CONTAINER_ID), int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['fabitimage_id']), str(queue_parameters['startup_command']), enable_ftp, ftp_username, ftp_password, queue_parameters['allowed_ports'], int(queue_parameters['disk']), int(queue_parameters['cpu']), int(queue_parameters['ram']),))
+               push_server.execute("INSERT INTO servers (server_id, container_id, container_uid, container_gid, krabssyimage_id, startup_command, enable_ftp, ftp_username, ftp_password, allowed_ports, disk, cpu, ram) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (str(queue_parameters['server_id']), str(CONTAINER_ID), int(CONTAINER_UID), int(CONTAINER_GID), int(queue_parameters['krabssyimage_id']), str(queue_parameters['startup_command']), enable_ftp, ftp_username, ftp_password, queue_parameters['allowed_ports'], int(queue_parameters['disk']), int(queue_parameters['cpu']), int(queue_parameters['ram']),))
                daemondb.commit()
                Logger("info", "Created server with container ID " + CONTAINER_ID)
                    
@@ -543,16 +543,16 @@ def QueueManager():
                            FTP_USERNAME = server['ftp_username']
                # Kill the container if running
                try:
-                   subprocess.check_output(['tmux', 'kill-session', '-t', CONTAINER_ID], cwd="/home/fabitmanage/daemon-data/" + CONTAINER_ID, preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)))
+                   subprocess.check_output(['tmux', 'kill-session', '-t', CONTAINER_ID], cwd="/home/krabssy/daemon-data/" + CONTAINER_ID, preexec_fn=AsUser(int(CONTAINER_UID), int(CONTAINER_GID)))
                except Exception as e:
                    pass
                # Remove all the restrictions of the container daemon-data directory
                try:
-                   subprocess.check_output(['chattr', '-u', '-i', "/home/fabitmanage/daemon-data/" + CONTAINER_ID])
+                   subprocess.check_output(['chattr', '-u', '-i', "/home/krabssy/daemon-data/" + CONTAINER_ID])
                except Exception as e:
                    pass
                try:
-                   subprocess.check_output(['chattr', '-u', '-i', "/home/fabitmanage/daemon-data/" + CONTAINER_ID + "/*"])
+                   subprocess.check_output(['chattr', '-u', '-i', "/home/krabssy/daemon-data/" + CONTAINER_ID + "/*"])
                except Exception as e:
                    pass
                # Force delete the container with its daemon-data directory
@@ -566,7 +566,7 @@ def QueueManager():
                daemondb.commit()
                # Make sure the daemon-data directory of the container was deleted
                try:
-                   subprocess.check_output(['rm', '-rf', "/home/fabitmanage/daemon-data/" + CONTAINER_ID])
+                   subprocess.check_output(['rm', '-rf', "/home/krabssy/daemon-data/" + CONTAINER_ID])
                except Exception as e:
                    pass
                # Remove the container's FTP if enabled
@@ -612,7 +612,7 @@ def PortBindingPermissions():
                                     break
                         except Exception as e:
                             pass
-                    if "fabitmanage-" in pid_owner:
+                    if "krabssy-" in pid_owner:
                         # The process is owned by a daemon container... Now check if the container has permissions to bind on this port.
                         daemondb = mysql.connector.connect(**db_settings)
                         get_server = daemondb.cursor(dictionary=True)
@@ -678,12 +678,12 @@ def daemon_FTP():
     get_servers_result = get_servers.fetchall()
     if get_servers.rowcount > 0:
         for server in get_servers_result:
-            ftp_authorizer.add_user(server['ftp_username'], server['ftp_password'], "/home/fabitmanage/daemon-data/" + server['container_id'], perm="elradfmwMT")
+            ftp_authorizer.add_user(server['ftp_username'], server['ftp_password'], "/home/krabssy/daemon-data/" + server['container_id'], perm="elradfmwMT")
     daemondb.close()
     ftpserv.serve_forever()
     
 def exit_handler():
-    print("Exiting FabitManage daemon...")
+    print("Exiting Krabssy daemon...")
     if 'ubuntu' in platform.platform().lower() or 'debian' in platform.platform().lower():
         try:
             subprocess.check_output(['killall', 'cgrulesengd'])
@@ -701,7 +701,7 @@ def exit_handler():
 
 if __name__ == '__main__':
     atexit.register(exit_handler)
-    print("FabitManage Daemon " + daemon_version)
+    print("Krabssy Daemon " + daemon_version)
     print("Starting threads & components...")
     # Test the connection to the daemon DB
     try:

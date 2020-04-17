@@ -1,6 +1,6 @@
 !/bin/bash
 clear
-echo "FabitManage Daemon v0.1-alpha Installer"
+echo "Krabssy Daemon v0.1-alpha Installer"
 echo "==========================================="
 echo "Press any key to start the installation, or press ^C to exit."
 pause
@@ -18,22 +18,22 @@ fi
 
 clear
 echo "Downloading components..."
-git clone https://github.com/mariolatiffathy/fabitmanage-daemon.git fabitmanage-installer-tmp
-mkdir -p /fabitmanage-daemon && cp ./fabitmanage-installer-tmp/daemon.py /fabitmanage-daemon
-mkdir -p /fabitmanage-daemon/config && cp ./fabitmanage-installer-tmp/config/daemon.ini /fabitmanage-daemon/config
-mkdir -p /fabitmanage-daemon/data/images && cp ./fabitmanage-installer-tmp/data/images/Minecraft.fabitimage /fabitmanage-daemon/data/images
+git clone https://github.com/mariolatiffathy/krabssy-daemon.git krabssy-installer-tmp
+mkdir -p /krabssy-daemon && cp ./krabssy-installer-tmp/daemon.py /krabssy-daemon
+mkdir -p /krabssy-daemon/config && cp ./krabssy-installer-tmp/config/daemon.ini /krabssy-daemon/config
+mkdir -p /krabssy-daemon/data/images && cp ./krabssy-installer-tmp/data/images/Minecraft.krabssyimage /krabssy-daemon/data/images
 
 clear
-echo "Installing fabitmanaged service..."
-cp /usr/bin/python3.6 /usr/bin/fabitmanagedpy
-cp /usr/bin/python3 /usr/bin/fabitmanagedpy
-cp ./fabitmanage-installer-tmp/fabitmanaged.service /lib/systemd/system
+echo "Installing krabssyd service..."
+cp /usr/bin/python3.6 /usr/bin/krabssydpy
+cp /usr/bin/python3 /usr/bin/krabssydpy
+cp ./krabssy-installer-tmp/krabssyd.service /lib/systemd/system
 systemctl daemon-reload
 
 clear
 echo "Installing required Python modules..."
-fabitmanagedpy -m pip install -r ./fabitmanage-installer-tmp/requirements.txt
+krabssydpy -m pip install -r ./krabssy-installer-tmp/requirements.txt
 
 clear
 echo "Removing temporary files..."
-rm -rf ./fabitmanage-installer-tmp/
+rm -rf ./krabssy-installer-tmp/

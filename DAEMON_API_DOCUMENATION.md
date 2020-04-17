@@ -65,7 +65,7 @@
       
       Type: string
       
-  - fabitimage_id: The ID of the FabitImage that is stored in the daemon database.
+  - krabssyimage_id: The ID of the KrabssyImage that is stored in the daemon database.
   
       Example: 123
       
@@ -127,18 +127,18 @@
 ## /api/v1/images
 **method**: POST (in JSON)
 
-**description**: Creates (uploads) a FabitImage
+**description**: Creates (uploads) a KrabssyImage
 
 **parameters**:
 
-  - The parameters is the FabitImage JSON directly. See the FabitImages documentaion for more information about the FabitImages JSON.
+  - The parameters is the KrabssyImage JSON directly. See the KrabssyImages documentaion for more information about the KrabssyImages JSON.
   
 ## /api/v1/images/<image_id>
 **method**: GET
 
-**description**: Retrives the FabitImage information.
+**description**: Retrives the KrabssyImage information.
 
 ## /api/v1/images/<image_id>
 **method**: DELETE
 
-**description**: Deletes a FabitImage.
+**description**: Deletes a KrabssyImage.

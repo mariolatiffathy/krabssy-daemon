@@ -80,7 +80,7 @@ CREATE TABLE `servers` (
   `container_id` text NOT NULL,
   `container_uid` int(11) NOT NULL,
   `container_gid` int(11) NOT NULL,
-  `fabitimage_id` int(11) NOT NULL,
+  `krabssyimage_id` int(11) NOT NULL,
   `startup_command` text NOT NULL,
   `enable_ftp` int(11) NOT NULL,
   `ftp_username` text NOT NULL,
