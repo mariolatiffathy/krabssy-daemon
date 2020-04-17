@@ -13,8 +13,8 @@ if [  -n "$(uname -a | grep Ubuntu)" ]; then
 else
     yum -y install https://centos7.iuscommunity.org/ius-release.rpm
     yum -y update
-    yum -y install git tmux python36u python36u-libs python36u-devel python36u-pip libcgroup libcgroup-tools
-fi curl
+    yum -y install git tmux python36u python36u-libs python36u-devel python36u-pip libcgroup libcgroup-tools curl
+fi
 
 clear
 echo "Downloading components..."
