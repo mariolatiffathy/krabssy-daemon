@@ -9,12 +9,12 @@ clear
 echo "Updating system and installing required packages..."
 if [  -n "$(uname -a | grep Ubuntu)" ]; then
     apt-get -y update
-    apt-get -y install git-core quota cgroup-tools libcgroup-dev tmux python3.6
+    apt-get -y install git-core quota cgroup-tools libcgroup-dev tmux python3.6 curl
 else
     yum -y install https://centos7.iuscommunity.org/ius-release.rpm
     yum -y update
     yum -y install git tmux python36u python36u-libs python36u-devel python36u-pip libcgroup libcgroup-tools
-fi
+fi curl
 
 clear
 echo "Downloading components..."
@@ -29,6 +29,11 @@ cp /usr/bin/python3.6 /usr/bin/krabssydpy
 cp /usr/bin/python3 /usr/bin/krabssydpy
 cp ./krabssy-installer-tmp/krabssyd.service /lib/systemd/system
 systemctl daemon-reload
+
+clear
+echo "Installing pip..."
+curl https://bootstrap.pypa.io/get-pip.py -o ./krabssy-installer-tmp/get-pip.py
+krabssydpy ./krabssy-installer-tmp/get-pip.py
 
 clear
 echo "Installing required Python modules..."
