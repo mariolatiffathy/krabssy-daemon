@@ -6,7 +6,7 @@ A KrabssyImage lets you customize how you want a container to behave (i.e. what 
 An example KrabssyImage can be found in this folder.
 
 ## KrabssyImages components
-- name (string): The name of the KrabssyImage. This makes the KrabssyImage easy to identify. This name will be visible in the KrabssyManage Panel too.
+- name (string): The name of the KrabssyImage. This makes the KrabssyImage easy to identify. This name will be visible in the Krabssy Panel too.
 
 - author (string): The author (creator) of the KrabssyImage.
 
