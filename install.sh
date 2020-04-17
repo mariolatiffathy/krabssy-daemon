@@ -9,7 +9,6 @@ clear
 echo "Updating system and installing required packages..."
 if [  -n "$(uname -a | grep Ubuntu)" ]; then
     apt-get -y update
-    apt-get -y install git-core quota cgroup-tools libcgroup-dev tmux python3.6 curl
     for i in git-core quota cgroup-tools libcgroup-dev tmux python3.6 curl python-dev python3-dev python3.6-dev; do 
         apt-get -y install $i 
     done
