@@ -15,8 +15,9 @@ import platform
 import sys
 import random
 import string
-import mysql.connector
+import signal
 import atexit
+import mysql.connector
 from flask import Flask, jsonify, request
 from waitress import serve
 from pyftpdlib.authorizers import DummyAuthorizer 
@@ -682,6 +683,9 @@ def daemon_FTP():
     daemondb.close()
     ftpserv.serve_forever()
     
+def exit():
+    os.kill(os.getpid(), signal.SIGKILL)
+    
 def exit_handler():
     print("Exiting Krabssy daemon...")
     if 'ubuntu' in platform.platform().lower() or 'debian' in platform.platform().lower():
@@ -697,7 +701,7 @@ def exit_handler():
         subprocess.check_output(['pkill', '-f', 'tmux'])
     except Exception as e:
         pass
-    sys.exit()
+    exit()
 
 if __name__ == '__main__':
     atexit.register(exit_handler)
@@ -710,7 +714,7 @@ if __name__ == '__main__':
        )
     except mysql.connector.errors.DatabaseError as e:
         Logger("error", "Unable to connect to the daemon database.")
-        sys.exit()
+        exit()
     # Define & start the daemon threads
     for _ in range(int(daemon_config['threads']['queuemanager_threads'])):
         QueueManager_t = threading.Thread(target=QueueManager, args=())
