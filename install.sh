@@ -10,10 +10,15 @@ echo "Updating system and installing required packages..."
 if [  -n "$(uname -a | grep Ubuntu)" ]; then
     apt-get -y update
     apt-get -y install git-core quota cgroup-tools libcgroup-dev tmux python3.6 curl
+    for i in git-core quota cgroup-tools libcgroup-dev tmux python3.6 curl python-dev python3-dev python3.6-dev; do 
+        apt-get -y install $i 
+    done
 else
     yum -y install https://centos7.iuscommunity.org/ius-release.rpm
     yum -y update
-    yum -y install git tmux python36u python36u-libs python36u-devel python36u-pip libcgroup libcgroup-tools curl
+    for i in git tmux python36u python36u-libs python36u-devel python36u-pip libcgroup libcgroup-tools curl python-devel python3-devel python3.6-devel; do 
+        yum -y install $i 
+    done
 fi
 
 clear
