@@ -269,7 +269,7 @@ def server_power(server_id):
             SERVER_STARTUP_COMMAND = server['startup_command']
     TMUX_SESSION_EXISTS = False
     try:
-        subprocess.check_output(("tmux has-session -t " + SERVER_CONTAINER_ID).split(" "), cwd="/home/krabssy/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+        subprocess.check_output(("tmux has-session -t " + SERVER_CONTAINER_ID).split(" "), stderr=subprocess.DEVNULL, cwd="/home/krabssy/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
         TMUX_SESSION_EXISTS = True
     except subprocess.CalledProcessError as e:
         TMUX_SESSION_EXISTS = False
@@ -353,7 +353,7 @@ def server_console(server_id):
             SERVER_CONTAINER_GID = int(server['container_gid'])
     TMUX_SESSION_EXISTS = False
     try:
-        subprocess.check_output(("tmux has-session -t " + SERVER_CONTAINER_ID).split(" "), cwd="/home/krabssy/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
+        subprocess.check_output(("tmux has-session -t " + SERVER_CONTAINER_ID).split(" "), stderr=subprocess.DEVNULL, cwd="/home/krabssy/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
         TMUX_SESSION_EXISTS = True
     except subprocess.CalledProcessError as e:
         TMUX_SESSION_EXISTS = False
@@ -652,7 +652,7 @@ def cgroups_refresher():
         if 'ubuntu' in platform.platform().lower() or 'debian' in platform.platform().lower():
             subprocess.check_output(['cgconfigparser', '-l', '/etc/cgconfig.conf'])
             try:
-                subprocess.check_output(['killall', 'cgrulesengd'])
+                subprocess.check_output(['killall', 'cgrulesengd'], stderr=subprocess.DEVNULL)
             except Exception as e:
                 pass
             subprocess.check_output(['cgrulesengd'])
@@ -704,15 +704,15 @@ def exit_handler():
     print("Exiting Krabssy daemon...")
     if 'ubuntu' in platform.platform().lower() or 'debian' in platform.platform().lower():
         try:
-            subprocess.check_output(['killall', 'cgrulesengd'])
+            subprocess.check_output(['killall', 'cgrulesengd'], stderr=subprocess.DEVNULL)
         except Exception as e:
             pass
     try:
-        subprocess.check_output(['tmux', 'kill-server'])
+        subprocess.check_output(['tmux', 'kill-server'], stderr=subprocess.DEVNULL)
     except Exception as e:
         pass
     try:
-        subprocess.check_output(['pkill', '-f', 'tmux'])
+        subprocess.check_output(['pkill', '-f', 'tmux'], stderr=subprocess.DEVNULL)
     except Exception as e:
         pass
     exit()
@@ -729,6 +729,11 @@ if __name__ == '__main__':
     except mysql.connector.errors.DatabaseError as e:
         Logger("error", "Unable to connect to the daemon database.")
         exit()
+    # Run quotacheck to ensure its fine
+    try:
+        subprocess.check_output(['quotacheck', '-avug'], stderr=subprocess.DEVNULL)
+    except Exception as e:
+        pass
     # Define & start the daemon threads
     for _ in range(int(daemon_config['threads']['queuemanager_threads'])):
         QueueManager_t = threading.Thread(target=QueueManager, args=())
