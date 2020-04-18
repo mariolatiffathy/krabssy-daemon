@@ -8,6 +8,7 @@ pause
 clear
 echo "Updating system and installing required packages..."
 if [  -n "$(uname -a | grep Ubuntu)" ]; then
+    add-apt-repository ppa:jonathonf/python-3.6
     apt-get -y update
     for i in git-core quota cgroup-tools libcgroup-dev tmux python3.6 curl python-dev python3-dev python3.6-dev; do 
         apt-get -y install $i 
@@ -29,8 +30,8 @@ mkdir -p /krabssy-daemon/data/images && cp ./krabssy-installer-tmp/data/images/M
 
 clear
 echo "Installing krabssyd service..."
-cp /usr/bin/python3.6 /usr/bin/krabssydpy
 cp /usr/bin/python3 /usr/bin/krabssydpy
+cp /usr/bin/python3.6 /usr/bin/krabssydpy
 cp ./krabssy-installer-tmp/krabssyd.service /lib/systemd/system
 systemctl daemon-reload
 
