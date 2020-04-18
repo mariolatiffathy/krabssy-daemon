@@ -288,12 +288,26 @@ def server_power(server_id):
             return jsonify({"error": {"http_code": 422, "description": "The server is already running."}}), 422
     if req_data['action'] == "stop":
         if TMUX_SESSION_EXISTS == True:
+            # Try to safely terminate all the container processes first. We do that to ensure everything gets saved (for example, Minecraft server data gets saved)
+            try:
+                for proc in process_iter():
+                    if proc.username() == SERVER_CONTAINER_ID:
+                        subprocess.check_output(["kill", "-15", str(proc.pid)])
+            except Exception as e:
+                pass
             # A tmux session for the container is running... Kill it now
             subprocess.check_output(['tmux', 'kill-session', '-t', SERVER_CONTAINER_ID], cwd="/home/krabssy/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
             return jsonify({"success": {"http_code": 200, "description": "Server successfully stopped."}}), 200
         else:
             return jsonify({"error": {"http_code": 422, "description": "The server is already stopped."}}), 422
     if req_data['action'] == "restart":
+        # Try to safely terminate all the container processes first. We do that to ensure everything gets saved (for example, Minecraft server data gets saved)
+        try:
+            for proc in process_iter():
+                if proc.username() == SERVER_CONTAINER_ID:
+                    subprocess.check_output(["kill", "-15", str(proc.pid)])
+        except Exception as e:
+            pass
         try:
             subprocess.check_output(['tmux', 'kill-session', '-t', SERVER_CONTAINER_ID], cwd="/home/krabssy/daemon-data/" + SERVER_CONTAINER_ID, preexec_fn=AsUser(int(SERVER_CONTAINER_UID), int(SERVER_CONTAINER_GID)))
         except Exception as e:
