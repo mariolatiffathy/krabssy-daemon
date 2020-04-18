@@ -8,7 +8,7 @@ pause
 clear
 echo "Updating system and installing required packages..."
 if [  -n "$(uname -a | grep Ubuntu)" ]; then
-    add-apt-repository ppa:jonathonf/python-3.6
+    add-apt-repository ppa:deadsnakes/ppa
     apt-get -y update
     for i in git-core quota cgroup-tools libcgroup-dev tmux python3.6 curl python-dev python3-dev python3.6-dev; do 
         apt-get -y install $i 
@@ -16,7 +16,7 @@ if [  -n "$(uname -a | grep Ubuntu)" ]; then
 else
     yum -y install https://centos7.iuscommunity.org/ius-release.rpm
     yum -y update
-    for i in git tmux python36u python36u-libs python36u-devel python36u-pip libcgroup libcgroup-tools curl python-devel python3-devel python3.6-devel; do 
+    for i in git tmux python36u python36u-libs python36u-devel python36u-pip libcgroup libcgroup-tools curl python-devel python3-devel python3.6-devel python36-devel; do 
         yum -y install $i 
     done
 fi
