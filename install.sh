@@ -16,7 +16,7 @@ if [  -n "$(uname -a | grep Ubuntu)" ]; then
 else
     yum -y install https://centos7.iuscommunity.org/ius-release.rpm
     yum -y update
-    for i in git tmux python36u python36u-libs python36u-devel python36u-pip libcgroup libcgroup-tools curl python-devel python3-devel python3.6-devel python36-devel; do 
+    for i in git tmux python36u python36u-libs python36u-devel python36u-pip libcgroup libcgroup-tools curl python-devel python3-devel python3.6-devel python36-devel python36u-devel; do 
         yum -y install $i 
     done
 fi
